@@ -1,0 +1,121 @@
+services:
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: resumeai-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./backend/public:/var/www/html/public
+    depends_on:
+      - app
+      - frontend
+    networks:
+      - resumeai
+
+  # Laravel API
+  app:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile
+    container_name: resumeai-app
+    volumes:
+      - ./backend:/var/www/html
+    environment:
+      - APP_ENV=local
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - resumeai
+
+  # Vue Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/Dockerfile.frontend
+    container_name: resumeai-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+    networks:
+      - resumeai
+
+  # Laravel Queue Worker
+  queue:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile
+    container_name: resumeai-queue
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - app
+      - postgres
+      - redis
+    networks:
+      - resumeai
+
+  # Laravel Scheduler
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile
+    container_name: resumeai-scheduler
+    command: >
+      sh -c "while true; do php artisan schedule:run --verbose --no-interaction & sleep 60; done"
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - app
+    networks:
+      - resumeai
+
+  # PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: resumeai-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: resumeai
+      POSTGRES_USER: resumeai
+      POSTGRES_PASSWORD: resumeai_secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - resumeai
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: resumeai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - resumeai
+
+  # Mailpit (dev email testing)
+  mailpit:
+    image: axllent/mailpit
+    container_name: resumeai-mailpit
+    ports:
+      - "8025:8025"
+    networks:
+      - resumeai
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  resumeai:
+    driver: bridge
