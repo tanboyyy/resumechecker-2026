@@ -12,7 +12,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true
       const { data } = await api.get('/auth/user')
-      user.value = data
+      user.value = data.data
     } catch {
       user.value = null
     } finally {

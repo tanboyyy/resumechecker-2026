@@ -12,7 +12,7 @@ export const useResumeStore = defineStore('resume', () => {
     loading.value = true
     try {
       const { data } = await api.get('/resumes')
-      resumes.value = data
+      resumes.value = data.data
     } finally {
       loading.value = false
     }
@@ -29,8 +29,8 @@ export const useResumeStore = defineStore('resume', () => {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
 
-      resumes.value.unshift(data)
-      return data
+      resumes.value.unshift(data.data)
+      return data.data
     } finally {
       uploading.value = false
     }
@@ -43,7 +43,7 @@ export const useResumeStore = defineStore('resume', () => {
 
   async function getResume(id: number): Promise<Resume> {
     const { data } = await api.get(`/resumes/${id}`)
-    return data
+    return data.data
   }
 
   return { resumes, loading, uploading, fetchResumes, uploadResume, deleteResume, getResume }

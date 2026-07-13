@@ -27,6 +27,24 @@ const router = createRouter({
       component: () => import('@/pages/ResumesPage.vue'),
       meta: { auth: true },
     },
+    {
+      path: '/resumes/:id',
+      name: 'resume',
+      component: () => import('@/pages/ResumeDetailPage.vue'),
+      meta: { auth: true },
+    },
+    {
+      path: '/resumes/:id/analyze',
+      name: 'analyze',
+      component: () => import('@/pages/AnalysisCreatePage.vue'),
+      meta: { auth: true },
+    },
+    {
+      path: '/resumes/:resumeId/analyses/:analysisId',
+      name: 'analysis',
+      component: () => import('@/pages/AnalysisPage.vue'),
+      meta: { auth: true },
+    },
   ],
 })
 
