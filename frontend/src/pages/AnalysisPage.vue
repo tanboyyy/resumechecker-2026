@@ -6,21 +6,29 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
       </router-link>
-      <div>
+      <div class="flex-1">
         <h1 class="text-2xl font-bold text-gray-900">Analysis Results</h1>
-        <p class="text-gray-600 mt-1 capitalize">{{ analysis?.type }} Analysis</p>
+        <p class="text-gray-600 mt-1 capitalize">{{ analysis?.type ?? 'Analysis' }}</p>
       </div>
+      <button
+        v-if="analysis?.status === 'completed'"
+        @click="handleExport"
+        :disabled="exporting"
+        class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
+      >
+        {{ exporting ? 'Generating...' : 'Export PDF' }}
+      </button>
     </div>
 
-    <div v-if="loading" class="text-center py-12">
+    <div v-if="loading && !analysis" class="text-center py-12">
       <div class="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto"></div>
       <p class="text-gray-500 mt-2">Loading analysis...</p>
     </div>
 
-    <div v-else-if="analysis?.status === 'processing' || analysis?.status === 'pending'" class="text-center py-12">
+    <div v-else-if="isPolling" class="text-center py-12">
       <div class="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto"></div>
-      <p class="text-gray-500 mt-2">Analysis in progress...</p>
-      <button @click="refresh" class="mt-4 text-sm text-indigo-600 hover:text-indigo-700">Refresh</button>
+      <p class="text-gray-500 mt-2">Analysis in progress... (checking every 3s)</p>
+      <p class="text-sm text-gray-400 mt-1">This will update automatically when complete</p>
     </div>
 
     <div v-else-if="analysis?.status === 'failed'" class="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
@@ -75,6 +83,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAnalysisStore } from '@/stores/analysis'
+import { useAnalysisPolling } from '@/composables/useAnalysisPolling'
 import ScoreGauge from '@/components/charts/ScoreGauge.vue'
 import FeedbackItem from '@/components/analysis/FeedbackItem.vue'
 
@@ -84,8 +93,11 @@ const analysisStore = useAnalysisStore()
 const resumeId = Number(route.params.resumeId)
 const analysisId = Number(route.params.analysisId)
 const loading = ref(true)
+const exporting = ref(false)
 
 const analysis = computed(() => analysisStore.currentAnalysis)
+
+const { status: pollingStatus, polling: isPolling, startPolling, stopPolling } = useAnalysisPolling(resumeId, analysisId)
 
 const feedbackSummary = computed(() => {
   if (!analysis.value) return { critical: 0, warning: 0, info: 0, success: 0 }
@@ -101,12 +113,19 @@ const feedbackSummary = computed(() => {
 onMounted(async () => {
   await analysisStore.fetchAnalysis(resumeId, analysisId)
   loading.value = false
+
+  if (analysis.value && (analysis.value.status === 'pending' || analysis.value.status === 'processing')) {
+    startPolling()
+  }
 })
 
-async function refresh() {
-  loading.value = true
-  await analysisStore.fetchAnalysis(resumeId, analysisId)
-  loading.value = false
+async function handleExport() {
+  exporting.value = true
+  try {
+    window.open(`/api/resumes/${resumeId}/analyses/${analysisId}/export`, '_blank')
+  } finally {
+    exporting.value = false
+  }
 }
 
 function formatRawResponse(response: Record<string, unknown>): string {

@@ -45,6 +45,18 @@ const router = createRouter({
       component: () => import('@/pages/AnalysisPage.vue'),
       meta: { auth: true },
     },
+    {
+      path: '/billing',
+      name: 'billing',
+      component: () => import('@/pages/BillingPage.vue'),
+      meta: { auth: true },
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: () => import('@/pages/SettingsPage.vue'),
+      meta: { auth: true },
+    },
   ],
 })
 

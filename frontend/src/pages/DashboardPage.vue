@@ -13,6 +13,18 @@
             >
               Resumes
             </router-link>
+            <router-link
+              to="/billing"
+              class="text-sm text-gray-600 hover:text-gray-900 transition"
+            >
+              Billing
+            </router-link>
+            <router-link
+              to="/settings"
+              class="text-sm text-gray-600 hover:text-gray-900 transition"
+            >
+              Settings
+            </router-link>
             <div v-if="auth.user" class="flex items-center gap-3">
               <img
                 v-if="auth.user.avatar"
@@ -34,12 +46,16 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div v-if="route.query.upgraded" class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+        <p class="text-green-700 font-medium">Your plan has been upgraded! Enjoy your new features.</p>
+      </div>
+
       <div class="mb-8">
         <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p class="text-gray-600 mt-1">Manage your resumes and analyses</p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div class="text-sm font-medium text-gray-500">Total Resumes</div>
           <div class="text-3xl font-bold text-gray-900 mt-1">{{ stats.totalResumes }}</div>
@@ -49,8 +65,12 @@
           <div class="text-3xl font-bold text-gray-900 mt-1">{{ stats.totalAnalyses }}</div>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div class="text-sm font-medium text-gray-500">Avg Score</div>
-          <div class="text-3xl font-bold text-gray-900 mt-1">{{ stats.avgScore }}</div>
+          <div class="text-sm font-medium text-gray-500">Plan</div>
+          <div class="text-3xl font-bold text-gray-900 mt-1 capitalize">{{ stats.plan }}</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div class="text-sm font-medium text-gray-500">Analyses Left</div>
+          <div class="text-3xl font-bold text-gray-900 mt-1">{{ stats.analysesLeft }}</div>
         </div>
       </div>
 
@@ -72,19 +92,28 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useResumeStore } from '@/stores/resume'
+import { useBillingStore } from '@/stores/billing'
 
+const route = useRoute()
 const auth = useAuthStore()
 const resumeStore = useResumeStore()
+const billingStore = useBillingStore()
 
 onMounted(() => {
   resumeStore.fetchResumes()
+  billingStore.fetchSubscription()
+  billingStore.fetchUsage()
 })
 
 const stats = computed(() => ({
   totalResumes: resumeStore.resumes.length,
   totalAnalyses: resumeStore.resumes.reduce((sum, r) => sum + r.analyses_count, 0),
-  avgScore: '--',
+  plan: billingStore.subscription?.plan ?? 'Free',
+  analysesLeft: billingStore.usage
+    ? (billingStore.usage.analysis_limit === -1 ? '∞' : billingStore.usage.analysis_limit - billingStore.usage.analyses_used)
+    : '--',
 }))
 </script>
