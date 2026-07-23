@@ -1,7 +1,11 @@
 import { ref, onUnmounted } from 'vue'
 import api from '@/services/api'
 
-export function useAnalysisPolling(resumeId: number, analysisId: number) {
+export function useAnalysisPolling(
+  resumeId: number,
+  analysisId: number,
+  onComplete?: () => void,
+) {
   const status = ref<string>('pending')
   const score = ref<number | null>(null)
   const error = ref<string | null>(null)
@@ -17,6 +21,7 @@ export function useAnalysisPolling(resumeId: number, analysisId: number) {
 
       if (data.status === 'completed' || data.status === 'failed') {
         stopPolling()
+        onComplete?.()
       }
     } catch {
       stopPolling()

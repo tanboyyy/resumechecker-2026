@@ -23,10 +23,20 @@ interface Usage {
   resumes_count: number
 }
 
+interface GeminiStatus {
+  connected: boolean
+  model?: string
+  rate_limit?: number | null
+  rate_remaining?: number | null
+  rate_reset?: string | null
+  error?: string
+}
+
 export const useBillingStore = defineStore('billing', () => {
   const plans = ref<Plan[]>([])
   const subscription = ref<Subscription | null>(null)
   const usage = ref<Usage | null>(null)
+  const geminiStatus = ref<GeminiStatus | null>(null)
   const loading = ref(false)
 
   async function fetchPlans() {
@@ -42,6 +52,15 @@ export const useBillingStore = defineStore('billing', () => {
   async function fetchUsage() {
     const { data } = await api.get('/billing/usage')
     usage.value = data
+  }
+
+  async function fetchGeminiStatus() {
+    try {
+      const { data } = await api.get('/gemini/status')
+      geminiStatus.value = data
+    } catch {
+      geminiStatus.value = { connected: false, error: 'Failed to check status' }
+    }
   }
 
   async function checkout(plan: string): Promise<string> {
@@ -63,5 +82,5 @@ export const useBillingStore = defineStore('billing', () => {
     }
   }
 
-  return { plans, subscription, usage, loading, fetchPlans, fetchSubscription, fetchUsage, checkout, openPortal, fetchAll }
+  return { plans, subscription, usage, geminiStatus, loading, fetchPlans, fetchSubscription, fetchUsage, fetchGeminiStatus, checkout, openPortal, fetchAll }
 })

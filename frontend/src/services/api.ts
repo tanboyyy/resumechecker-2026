@@ -13,8 +13,9 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 419) {
+    if (error.response?.status === 419 && !error.config.__isRetry) {
       await api.get('/auth/csrf')
+      error.config.__isRetry = true
       return api(error.config)
     }
     return Promise.reject(error)

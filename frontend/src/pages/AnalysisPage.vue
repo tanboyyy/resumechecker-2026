@@ -43,7 +43,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-1">
           <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-            <ScoreGauge :score="analysis.ats_score ?? 0" :size="160" :stroke-width="10" />
+            <ScoreGauge :score="analysis.ats_score ?? 0" :size="160" :stroke-width="10" :label="scoreLabel" />
             <div class="mt-4 text-sm text-gray-500">
               {{ feedbackSummary.critical }} critical &middot;
               {{ feedbackSummary.warning }} warnings &middot;
@@ -69,9 +69,7 @@
 
           <div v-if="analysis.raw_response" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Summary</h2>
-            <div class="text-sm text-gray-700 whitespace-pre-wrap">
-              {{ formatRawResponse(analysis.raw_response) }}
-            </div>
+            <div class="prose prose-sm max-w-none text-gray-700" v-html="renderMarkdown(formatRawResponse(analysis.raw_response))"></div>
           </div>
         </div>
       </div>
@@ -86,6 +84,7 @@ import { useAnalysisStore } from '@/stores/analysis'
 import { useAnalysisPolling } from '@/composables/useAnalysisPolling'
 import ScoreGauge from '@/components/charts/ScoreGauge.vue'
 import FeedbackItem from '@/components/analysis/FeedbackItem.vue'
+import api from '@/services/api'
 
 const route = useRoute()
 const analysisStore = useAnalysisStore()
@@ -97,17 +96,32 @@ const exporting = ref(false)
 
 const analysis = computed(() => analysisStore.currentAnalysis)
 
-const { status: pollingStatus, polling: isPolling, startPolling, stopPolling } = useAnalysisPolling(resumeId, analysisId)
+const { status: pollingStatus, polling: isPolling, startPolling, stopPolling } = useAnalysisPolling(
+  resumeId,
+  analysisId,
+  () => analysisStore.fetchAnalysis(resumeId, analysisId),
+)
 
 const feedbackSummary = computed(() => {
-  if (!analysis.value) return { critical: 0, warning: 0, info: 0, success: 0 }
+  if (!analysis.value) return { critical: 0, warning: 0, info: 0 }
   return analysis.value.feedback.reduce(
     (acc, item) => {
-      acc[item.severity] = (acc[item.severity] || 0) + 1
+      const key = item.severity === 'suggestion' ? 'info' : item.severity
+      acc[key] = (acc[key] || 0) + 1
       return acc
     },
-    { critical: 0, warning: 0, info: 0, success: 0 } as Record<string, number>
+    { critical: 0, warning: 0, info: 0 } as Record<string, number>
   )
+})
+
+const scoreLabel = computed(() => {
+  const labels: Record<string, string> = {
+    ats: 'ATS Score',
+    content: 'Content Score',
+    formatting: 'Format Score',
+    comparison: 'Match Score',
+  }
+  return labels[analysis.value?.type ?? ''] ?? 'Score'
 })
 
 onMounted(async () => {
@@ -122,15 +136,48 @@ onMounted(async () => {
 async function handleExport() {
   exporting.value = true
   try {
-    window.open(`/api/resumes/${resumeId}/analyses/${analysisId}/export`, '_blank')
+    const response = await api.get(`/resumes/${resumeId}/analyses/${analysisId}/export`, {
+      responseType: 'blob',
+    })
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `analysis-${analysisId}.pdf`
+    link.click()
+    URL.revokeObjectURL(url)
   } finally {
     exporting.value = false
   }
 }
 
+function renderMarkdown(text: string): string {
+  return text
+    .replace(/^### (.+)$/gm, '<h3 class="text-sm font-semibold text-gray-900 mt-3 mb-1">$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2 class="text-base font-semibold text-gray-900 mt-4 mb-2">$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1 class="text-lg font-bold text-gray-900 mt-4 mb-2">$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc text-gray-700">$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm, '<li class="ml-4 list-decimal text-gray-700">$2</li>')
+    .replace(/^---$/gm, '<hr class="my-3 border-gray-200">')
+    .replace(/\n\n/g, '<br><br>')
+}
+
 function formatRawResponse(response: Record<string, unknown>): string {
   if (response.summary) return String(response.summary)
   if (response.overall) return String(response.overall)
+  if (response.match_analysis) return String(response.match_analysis)
+  if (response.rewritten_sections) {
+    return (response.rewritten_sections as Array<Record<string, string>>)
+      .map(s => `## ${s.section}\n\n**Original:** ${s.original}\n\n**Rewritten:** ${s.rewritten}\n\n**Why:** ${s.explanation}`)
+      .join('\n\n---\n\n')
+  }
+  if (response.questions) {
+    return (response.questions as Array<Record<string, string>>)
+      .map((q, i) => `${i + 1}. [${q.difficulty}] ${q.question}\n   Hint: ${q.answer_hint || 'N/A'}`)
+      .join('\n\n')
+  }
   return JSON.stringify(response, null, 2)
 }
 </script>

@@ -6,6 +6,47 @@
     </div>
 
     <div
+      v-if="lastUploaded"
+      class="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between"
+    >
+      <div class="flex items-center gap-3">
+        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-sm font-medium text-green-800">
+          {{ lastUploaded.title }} uploaded successfully!
+        </span>
+      </div>
+      <div class="flex items-center gap-3">
+        <router-link
+          :to="{ name: 'analyze', params: { id: lastUploaded.id } }"
+          class="text-sm font-medium text-green-700 hover:text-green-800 underline"
+        >
+          Run analysis
+        </router-link>
+        <button @click="lastUploaded = null" class="text-green-600 hover:text-green-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div v-if="uploadError" class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-sm font-medium text-red-800">{{ uploadError }}</span>
+      </div>
+      <button @click="uploadError = ''" class="text-red-600 hover:text-red-700">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <div
       @dragover.prevent="dragging = true"
       @dragleave="dragging = false"
       @drop.prevent="handleDrop"
@@ -33,7 +74,7 @@
             @change="handleFileSelect"
           />
         </label>
-        <p class="text-sm text-gray-500">PDF or DOCX, max 10MB</p>
+        <p class="text-sm text-gray-500">PDF or DOCX, max 20MB</p>
       </div>
     </div>
 
@@ -93,6 +134,8 @@ import type { Resume } from '@/types'
 
 const resumeStore = useResumeStore()
 const dragging = ref(false)
+const lastUploaded = ref<Resume | null>(null)
+const uploadError = ref('')
 
 onMounted(() => {
   resumeStore.fetchResumes()
@@ -101,7 +144,7 @@ onMounted(() => {
 function handleFileSelect(event: Event) {
   const input = event.target as HTMLInputElement
   if (input.files?.[0]) {
-    resumeStore.uploadResume(input.files[0])
+    doUpload(input.files[0])
     input.value = ''
   }
 }
@@ -110,13 +153,30 @@ function handleDrop(event: DragEvent) {
   dragging.value = false
   const file = event.dataTransfer?.files[0]
   if (file) {
-    resumeStore.uploadResume(file)
+    doUpload(file)
+  }
+}
+
+async function doUpload(file: File) {
+  uploadError.value = ''
+  lastUploaded.value = null
+  try {
+    const uploaded = await resumeStore.uploadResume(file)
+    lastUploaded.value = uploaded
+    setTimeout(() => { lastUploaded.value = null }, 10000)
+  } catch (e: unknown) {
+    const msg = (e as any)?.response?.data?.message
+      || (e instanceof Error ? e.message : 'Upload failed. Please try again.')
+    uploadError.value = msg
   }
 }
 
 async function handleDelete(resume: Resume) {
   if (confirm(`Delete "${resume.title}"?`)) {
     await resumeStore.deleteResume(resume.id)
+    if (lastUploaded.value?.id === resume.id) {
+      lastUploaded.value = null
+    }
   }
 }
 

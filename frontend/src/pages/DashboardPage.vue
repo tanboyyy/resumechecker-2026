@@ -74,6 +74,33 @@
         </div>
       </div>
 
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">API Status</h2>
+        <div class="flex items-center gap-4">
+          <div :class="[
+            'w-3 h-3 rounded-full',
+            billingStore.geminiStatus?.connected ? 'bg-green-500' : 'bg-red-500'
+          ]"></div>
+          <div>
+            <div class="text-sm font-medium text-gray-900">
+              Gemini {{ billingStore.geminiStatus?.model ?? '...' }}
+            </div>
+            <div v-if="billingStore.geminiStatus?.connected" class="text-xs text-gray-500">
+              <template v-if="billingStore.geminiStatus.rate_remaining !== null && billingStore.geminiStatus.rate_remaining !== undefined">
+                {{ billingStore.geminiStatus.rate_remaining }} / {{ billingStore.geminiStatus.rate_limit }} requests remaining
+                <span v-if="billingStore.geminiStatus.rate_reset"> (resets {{ billingStore.geminiStatus.rate_reset }})</span>
+              </template>
+              <template v-else>
+                Connected and ready
+              </template>
+            </div>
+            <div v-else class="text-xs text-red-500">
+              {{ billingStore.geminiStatus?.error ?? 'Not connected' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
         <p v-if="stats.totalResumes > 0" class="text-gray-500 mb-4">
           You have {{ stats.totalResumes }} resume{{ stats.totalResumes === 1 ? '' : 's' }}
@@ -106,6 +133,7 @@ onMounted(() => {
   resumeStore.fetchResumes()
   billingStore.fetchSubscription()
   billingStore.fetchUsage()
+  billingStore.fetchGeminiStatus()
 })
 
 const stats = computed(() => ({

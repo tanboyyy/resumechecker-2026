@@ -6,7 +6,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
       </router-link>
-      <div>
+      <div class="flex-1">
         <h1 class="text-2xl font-bold text-gray-900">{{ resume?.title }}</h1>
         <p class="text-gray-600 mt-1">{{ resume?.original_filename }} &middot; {{ resume?.size_human }}</p>
       </div>
@@ -17,14 +17,74 @@
     <template v-else-if="resume">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Resume Text</h2>
-            <div v-if="resume.text_extracted && resume.extracted_text" class="text-sm text-gray-700 whitespace-pre-wrap max-h-96 overflow-y-auto">
-              {{ resume.extracted_text }}
+          <!-- PDF Viewer -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200">
+              <h2 class="text-lg font-semibold text-gray-900">PDF Preview</h2>
+              <button
+                @click="handleDownload"
+                class="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+              >
+                Download
+              </button>
             </div>
-            <div v-else class="text-gray-500 italic">Text extraction in progress...</div>
+            <div class="w-full" style="height: 700px;">
+              <iframe
+                v-if="resume.mime_type?.includes('pdf')"
+                :src="pdfViewUrl"
+                class="w-full h-full border-0"
+                title="PDF Preview"
+              ></iframe>
+              <div v-else class="flex items-center justify-center h-full text-gray-400">
+                <div class="text-center">
+                  <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p class="text-sm">Preview not available for this file type</p>
+                </div>
+              </div>
+            </div>
           </div>
 
+          <!-- Extracted Text (collapsible) -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <button
+              @click="showExtractedText = !showExtractedText"
+              class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition"
+            >
+              <div class="flex items-center gap-3">
+                <h2 class="text-lg font-semibold text-gray-900">Extracted Text</h2>
+                <span
+                  v-if="resume.text_extracted"
+                  class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full"
+                >
+                  Ready
+                </span>
+                <span
+                  v-else
+                  class="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full"
+                >
+                  Processing...
+                </span>
+              </div>
+              <svg
+                :class="['w-5 h-5 text-gray-400 transition-transform', showExtractedText ? 'rotate-180' : '']"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <div v-show="showExtractedText" class="px-6 pb-6">
+              <div v-if="resume.text_extracted && resume.extracted_text" class="text-sm text-gray-700 whitespace-pre-wrap max-h-96 overflow-y-auto border border-gray-100 rounded-lg p-4 bg-gray-50 font-mono leading-relaxed">
+                {{ resume.extracted_text }}
+              </div>
+              <div v-else class="text-gray-400 italic text-sm py-4 text-center">
+                Text is being extracted from your resume...
+              </div>
+            </div>
+          </div>
+
+          <!-- Analysis History -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-lg font-semibold text-gray-900">Analysis History</h2>
@@ -125,7 +185,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useResumeStore } from '@/stores/resume'
 import { useAnalysisStore } from '@/stores/analysis'
@@ -139,6 +199,13 @@ const analysisStore = useAnalysisStore()
 const resume = ref<Resume | null>(null)
 const analyses = ref<Analysis[]>([])
 const loading = ref(true)
+const showExtractedText = ref(false)
+
+const pdfViewUrl = computed(() => {
+  if (!resume.value) return ''
+  const base = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+  return `${base}/resumes/${resume.value.id}/view`
+})
 
 onMounted(async () => {
   const id = Number(route.params.id)
@@ -153,7 +220,8 @@ onMounted(async () => {
 
 function handleDownload() {
   if (resume.value) {
-    window.open(`/api/resumes/${resume.value.id}/download`, '_blank')
+    const base = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+    window.open(`${base}/resumes/${resume.value.id}/download`, '_blank')
   }
 }
 

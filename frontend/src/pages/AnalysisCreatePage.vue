@@ -56,6 +56,10 @@
         {{ analysisStore.creating ? 'Starting...' : 'Run Analysis' }}
       </button>
     </div>
+
+    <div v-if="error" class="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+      <p class="text-red-700 text-sm">{{ error }}</p>
+    </div>
   </div>
 </template>
 
@@ -71,6 +75,7 @@ const analysisStore = useAnalysisStore()
 const resumeId = Number(route.params.id)
 const selectedType = ref<string | null>(null)
 const jobDescription = ref('')
+const error = ref('')
 
 const AnalysisIcon = {
   render() {
@@ -110,12 +115,25 @@ const analysisTypes = [
 async function handleAnalyze() {
   if (!selectedType.value) return
 
-  const analysis = await analysisStore.createAnalysis(
-    resumeId,
-    selectedType.value,
-    jobDescription.value || undefined,
-  )
+  error.value = ''
 
-  router.push({ name: 'analysis', params: { resumeId, analysisId: analysis.id } })
+  try {
+    const analysis = await analysisStore.createAnalysis(
+      resumeId,
+      selectedType.value,
+      jobDescription.value || undefined,
+    )
+
+    if (!analysis?.id) {
+      error.value = 'Analysis created but no ID returned. Please try again.'
+      return
+    }
+
+    router.push({ name: 'analysis', params: { resumeId, analysisId: analysis.id } })
+  } catch (e: unknown) {
+    const msg = (e as any)?.response?.data?.message
+      || (e instanceof Error ? e.message : 'Failed to start analysis. Please try again.')
+    error.value = msg
+  }
 }
 </script>
