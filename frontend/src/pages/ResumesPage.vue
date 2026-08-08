@@ -1,190 +1,209 @@
 <template>
   <div class="space-y-6">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900">Resumes</h1>
-      <p class="text-gray-600 mt-1">Upload and manage your resumes</p>
-    </div>
+    <PageHeader
+      title="Resumes"
+      description="Upload a resume, then run an analysis against it."
+    />
 
+    <!-- Upload -->
     <div
-      v-if="lastUploaded"
-      class="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between"
-    >
-      <div class="flex items-center gap-3">
-        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span class="text-sm font-medium text-green-800">
-          {{ lastUploaded.title }} uploaded successfully!
-        </span>
-      </div>
-      <div class="flex items-center gap-3">
-        <router-link
-          :to="{ name: 'analyze', params: { id: lastUploaded.id } }"
-          class="text-sm font-medium text-green-700 hover:text-green-800 underline"
-        >
-          Run analysis
-        </router-link>
-        <button @click="lastUploaded = null" class="text-green-600 hover:text-green-700">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <div v-if="uploadError" class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span class="text-sm font-medium text-red-800">{{ uploadError }}</span>
-      </div>
-      <button @click="uploadError = ''" class="text-red-600 hover:text-red-700">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-
-    <div
+      class="rounded-xl border-2 border-dashed p-8 text-center transition"
+      :class="[
+        dragging ? 'border-brand bg-brand-soft' : 'border-border-strong hover:border-brand',
+        resumeStore.uploading && 'pointer-events-none opacity-60',
+      ]"
       @dragover.prevent="dragging = true"
       @dragleave="dragging = false"
       @drop.prevent="handleDrop"
-      :class="[
-        'border-2 border-dashed rounded-xl p-8 text-center transition',
-        dragging ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-gray-400',
-        resumeStore.uploading ? 'opacity-50 pointer-events-none' : '',
-      ]"
     >
-      <div v-if="resumeStore.uploading" class="space-y-2">
-        <div class="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto"></div>
-        <p class="text-gray-600">Uploading...</p>
+      <div v-if="resumeStore.uploading" class="flex flex-col items-center gap-3">
+        <Spinner size="2rem" class="text-brand" label="Uploading" />
+        <p class="text-sm text-content-muted">Uploading {{ uploadingName }}…</p>
       </div>
-      <div v-else class="space-y-2">
-        <svg class="w-12 h-12 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-        </svg>
-        <p class="text-gray-600">Drag and drop your resume, or</p>
-        <label class="inline-block cursor-pointer text-indigo-600 font-medium hover:text-indigo-700">
-          Browse files
-          <input
-            type="file"
-            accept=".pdf,.docx"
-            class="hidden"
-            @change="handleFileSelect"
-          />
-        </label>
-        <p class="text-sm text-gray-500">PDF or DOCX, max 20MB</p>
+
+      <div v-else class="flex flex-col items-center gap-2">
+        <span class="grid h-12 w-12 place-items-center rounded-xl bg-surface-muted text-content-subtle" aria-hidden="true">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0L8 8m4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+          </svg>
+        </span>
+        <p class="text-content">
+          Drag a file here, or
+          <label class="cursor-pointer font-semibold text-brand transition hover:text-brand-hover">
+            <span>browse</span>
+            <input type="file" accept=".pdf,.docx" class="sr-only" @change="handleFileSelect" />
+          </label>
+        </p>
+        <p class="text-sm text-content-subtle">PDF or DOCX, up to 20&nbsp;MB</p>
       </div>
     </div>
 
-    <div v-if="resumeStore.resumes.length === 0 && !resumeStore.loading" class="text-center py-12 text-gray-500">
-      No resumes uploaded yet
-    </div>
-
-    <div v-else class="space-y-3">
-      <router-link
-        v-for="resume in resumeStore.resumes"
-        :key="resume.id"
-        :to="{ name: 'resume', params: { id: resume.id } }"
-        class="block bg-white border border-gray-200 rounded-xl p-4 hover:shadow-sm transition"
-      >
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <div class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-              <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div>
-              <div class="font-medium text-gray-900">{{ resume.title }}</div>
-              <div class="text-sm text-gray-500">{{ resume.size_human }} &middot; {{ formatDate(resume.created_at) }}</div>
-            </div>
-          </div>
-          <div class="flex items-center gap-3">
-            <span
-              v-if="resume.text_extracted"
-              class="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full"
-            >
-              Text extracted
-            </span>
-            <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
-              {{ resume.analyses_count }} analyses
-            </span>
-            <button
-              @click.prevent="handleDelete(resume)"
-              class="p-2 text-gray-400 hover:text-red-500 transition"
-              title="Delete"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
+    <!-- List -->
+    <section class="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
+      <div v-if="resumeStore.loading" class="divide-y divide-border">
+        <div v-for="i in 3" :key="i" class="flex items-center gap-4 p-4">
+          <Skeleton width="2.5rem" height="2.5rem" />
+          <div class="flex-1 space-y-2">
+            <Skeleton width="35%" height="0.9rem" />
+            <Skeleton width="20%" height="0.75rem" />
           </div>
         </div>
-      </router-link>
-    </div>
+      </div>
+
+      <EmptyState
+        v-else-if="!resumeStore.resumes.length"
+        title="No resumes yet"
+        description="Upload one above and we'll pull the text out automatically."
+      />
+
+      <ul v-else class="divide-y divide-border">
+        <li
+          v-for="resume in resumeStore.resumes"
+          :key="resume.id"
+          class="group relative flex items-center gap-4 p-4 transition hover:bg-surface-muted"
+        >
+          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand" aria-hidden="true">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
+            </svg>
+          </span>
+
+          <div class="min-w-0 flex-1">
+            <RouterLink
+              :to="{ name: 'resume', params: { id: resume.id } }"
+              class="font-medium text-content after:absolute after:inset-0 after:content-['']"
+            >
+              <span class="block truncate">{{ resume.title }}</span>
+            </RouterLink>
+            <p class="mt-0.5 truncate text-sm text-content-muted">
+              {{ resume.size_human }} &middot; {{ resume.analyses_count }}
+              {{ resume.analyses_count === 1 ? 'analysis' : 'analyses' }} &middot;
+              {{ formatDate(resume.created_at) }}
+            </p>
+          </div>
+
+          <ExtractionBadge :resume="resume" class="hidden sm:inline-flex" />
+
+          <button
+            class="relative z-10 rounded-lg p-2 text-content-subtle transition hover:bg-critical-soft hover:text-critical"
+            :aria-label="`Delete ${resume.title}`"
+            @click="handleDelete(resume)"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </li>
+      </ul>
+
+      <Pagination
+        v-if="resumeStore.lastPage > 1"
+        :page="resumeStore.page"
+        :last-page="resumeStore.lastPage"
+        :total="resumeStore.total"
+        label="resumes"
+        @change="resumeStore.fetchResumes($event)"
+      />
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useResumeStore } from '@/stores/resume'
+import { useToastStore } from '@/stores/toast'
+import { confirm } from '@/composables/useConfirm'
+import { messageFor, upgradeActionFor } from '@/services/errors'
+import { formatDate } from '@/services/format'
 import type { Resume } from '@/types'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import Skeleton from '@/components/ui/Skeleton.vue'
+import Spinner from '@/components/ui/Spinner.vue'
+import Pagination from '@/components/ui/Pagination.vue'
+import ExtractionBadge from '@/components/resume/ExtractionBadge.vue'
 
 const resumeStore = useResumeStore()
-const dragging = ref(false)
-const lastUploaded = ref<Resume | null>(null)
-const uploadError = ref('')
+const toast = useToastStore()
 
-onMounted(() => {
-  resumeStore.fetchResumes()
+const dragging = ref(false)
+const uploadingName = ref('')
+
+/** Resumes still being read, polled until they settle. */
+let pollTimer: ReturnType<typeof setInterval> | null = null
+
+onMounted(async () => {
+  try {
+    await resumeStore.fetchResumes()
+    startPollingIfNeeded()
+  } catch (e) {
+    toast.error(await messageFor(e))
+  }
 })
+
+onBeforeUnmount(stopPolling)
+
+function startPollingIfNeeded() {
+  if (pollTimer) return
+
+  pollTimer = setInterval(async () => {
+    const pending = resumeStore.resumes.filter((r) => r.extraction_status === 'pending')
+
+    if (!pending.length) return stopPolling()
+
+    await Promise.all(pending.map((r) => resumeStore.refreshResume(r.id)))
+  }, 3000)
+}
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+}
 
 function handleFileSelect(event: Event) {
   const input = event.target as HTMLInputElement
-  if (input.files?.[0]) {
-    doUpload(input.files[0])
-    input.value = ''
-  }
+  const file = input.files?.[0]
+  if (file) doUpload(file)
+  input.value = ''
 }
 
 function handleDrop(event: DragEvent) {
   dragging.value = false
   const file = event.dataTransfer?.files[0]
-  if (file) {
-    doUpload(file)
-  }
+  if (file) doUpload(file)
 }
 
 async function doUpload(file: File) {
-  uploadError.value = ''
-  lastUploaded.value = null
+  uploadingName.value = file.name
+
   try {
-    const uploaded = await resumeStore.uploadResume(file)
-    lastUploaded.value = uploaded
-    setTimeout(() => { lastUploaded.value = null }, 10000)
-  } catch (e: unknown) {
-    const msg = (e as any)?.response?.data?.message
-      || (e instanceof Error ? e.message : 'Upload failed. Please try again.')
-    uploadError.value = msg
+    const resume = await resumeStore.uploadResume(file)
+    toast.success(`${resume.title} uploaded. Reading the text now…`)
+    startPollingIfNeeded()
+  } catch (e) {
+    toast.error(await messageFor(e), await upgradeActionFor(e))
+  } finally {
+    uploadingName.value = ''
   }
 }
 
 async function handleDelete(resume: Resume) {
-  if (confirm(`Delete "${resume.title}"?`)) {
-    await resumeStore.deleteResume(resume.id)
-    if (lastUploaded.value?.id === resume.id) {
-      lastUploaded.value = null
-    }
-  }
-}
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+  const confirmed = await confirm({
+    title: `Delete "${resume.title}"?`,
+    description: 'This also deletes its analyses. This cannot be undone.',
+    confirmLabel: 'Delete',
   })
+
+  if (!confirmed) return
+
+  try {
+    await resumeStore.deleteResume(resume.id)
+    toast.success('Resume deleted.')
+  } catch (e) {
+    toast.error(await messageFor(e))
+  }
 }
 </script>

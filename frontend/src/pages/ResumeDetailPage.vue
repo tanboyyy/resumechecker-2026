@@ -1,242 +1,319 @@
 <template>
   <div class="space-y-6">
-    <div class="flex items-center gap-4">
-      <router-link to="/resumes" class="text-gray-500 hover:text-gray-700">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
-      </router-link>
-      <div class="flex-1">
-        <h1 class="text-2xl font-bold text-gray-900">{{ resume?.title }}</h1>
-        <p class="text-gray-600 mt-1">{{ resume?.original_filename }} &middot; {{ resume?.size_human }}</p>
+    <PageHeader
+      :title="resume?.title ?? 'Resume'"
+      back-to="/resumes"
+      back-label="Back to resumes"
+      :description="resume ? `${resume.original_filename} · ${resume.size_human}` : undefined"
+    >
+      <template #actions>
+        <button
+          class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-content transition hover:bg-surface-muted"
+          @click="handleDownload"
+        >
+          Download
+        </button>
+        <RouterLink
+          v-if="resume?.extraction_status === 'completed'"
+          :to="{ name: 'analyze', params: { id: resumeId } }"
+          class="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition hover:bg-brand-hover"
+        >
+          Run analysis
+        </RouterLink>
+      </template>
+    </PageHeader>
+
+    <!-- Loading -->
+    <div v-if="loading" class="grid gap-6 lg:grid-cols-3">
+      <div class="space-y-4 lg:col-span-2">
+        <Skeleton height="24rem" />
       </div>
+      <Skeleton height="12rem" />
     </div>
 
-    <div v-if="loading" class="text-center py-12 text-gray-500">Loading...</div>
+    <EmptyState
+      v-else-if="!resume"
+      tone="critical"
+      title="We couldn't load this resume"
+      description="It may have been deleted, or the link may be wrong."
+    >
+      <RouterLink to="/resumes" class="rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-on-brand transition hover:bg-brand-hover">
+        Back to resumes
+      </RouterLink>
+    </EmptyState>
 
-    <template v-else-if="resume">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 space-y-6">
-          <!-- PDF Viewer -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200">
-              <h2 class="text-lg font-semibold text-gray-900">PDF Preview</h2>
-              <button
-                @click="handleDownload"
-                class="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-              >
-                Download
+    <template v-else>
+      <!-- Extraction failed: the single most important thing to say -->
+      <div
+        v-if="resume.extraction_status === 'failed'"
+        class="flex gap-3 rounded-xl border border-critical-border bg-critical-soft p-4"
+      >
+        <svg class="mt-0.5 h-5 w-5 shrink-0 text-critical" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+        </svg>
+        <div>
+          <p class="font-medium text-content">We couldn't read this file</p>
+          <p class="mt-1 text-sm text-content-muted">
+            {{ resume.extraction_error ?? 'Try uploading a text-based PDF or DOCX.' }}
+          </p>
+          <RouterLink to="/resumes" class="mt-2 inline-block text-sm font-semibold text-critical underline underline-offset-2">
+            Upload a different file
+          </RouterLink>
+        </div>
+      </div>
+
+      <div class="grid gap-6 lg:grid-cols-3">
+        <div class="space-y-6 lg:col-span-2">
+          <!-- Preview -->
+          <section class="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
+            <div class="flex items-center justify-between border-b border-border px-5 py-3">
+              <h2 class="font-semibold text-content">Preview</h2>
+              <button class="text-sm font-medium text-brand transition hover:text-brand-hover" @click="handleDownload">
+                Open in new tab
               </button>
             </div>
-            <div class="w-full" style="height: 700px;">
-              <iframe
-                v-if="resume.mime_type?.includes('pdf')"
-                :src="pdfViewUrl"
-                class="w-full h-full border-0"
-                title="PDF Preview"
-              ></iframe>
-              <div v-else class="flex items-center justify-center h-full text-gray-400">
-                <div class="text-center">
-                  <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <p class="text-sm">Preview not available for this file type</p>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- Extracted Text (collapsible) -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div v-if="isPdf" class="h-[32rem] bg-surface-muted sm:h-[42rem]">
+              <iframe :src="pdfViewUrl" class="h-full w-full border-0" title="Resume preview" />
+            </div>
+            <EmptyState
+              v-else
+              title="No preview for this format"
+              description="Download the file to view it."
+            />
+          </section>
+
+          <!-- Extracted text -->
+          <section class="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
             <button
-              @click="showExtractedText = !showExtractedText"
-              class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition"
+              class="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition hover:bg-surface-muted"
+              :aria-expanded="showText"
+              @click="showText = !showText"
             >
-              <div class="flex items-center gap-3">
-                <h2 class="text-lg font-semibold text-gray-900">Extracted Text</h2>
-                <span
-                  v-if="resume.text_extracted"
-                  class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full"
-                >
-                  Ready
-                </span>
-                <span
-                  v-else
-                  class="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full"
-                >
-                  Processing...
-                </span>
-              </div>
+              <span class="flex items-center gap-3">
+                <span class="font-semibold text-content">Extracted text</span>
+                <ExtractionBadge :resume="resume" />
+              </span>
               <svg
-                :class="['w-5 h-5 text-gray-400 transition-transform', showExtractedText ? 'rotate-180' : '']"
-                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                class="h-5 w-5 shrink-0 text-content-subtle transition-transform"
+                :class="showText && 'rotate-180'"
+                fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
               >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
               </svg>
             </button>
-            <div v-show="showExtractedText" class="px-6 pb-6">
-              <div v-if="resume.text_extracted && resume.extracted_text" class="text-sm text-gray-700 whitespace-pre-wrap max-h-96 overflow-y-auto border border-gray-100 rounded-lg p-4 bg-gray-50 font-mono leading-relaxed">
-                {{ resume.extracted_text }}
-              </div>
-              <div v-else class="text-gray-400 italic text-sm py-4 text-center">
-                Text is being extracted from your resume...
-              </div>
-            </div>
-          </div>
 
-          <!-- Analysis History -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-lg font-semibold text-gray-900">Analysis History</h2>
-              <router-link
+            <div v-show="showText" class="border-t border-border px-5 py-4">
+              <pre
+                v-if="resume.extracted_text"
+                class="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-surface-muted p-4 font-mono text-xs leading-relaxed text-content-muted"
+              >{{ resume.extracted_text }}</pre>
+              <p v-else-if="resume.extraction_status === 'pending'" class="py-6 text-center text-sm text-content-muted">
+                Reading the text from your file…
+              </p>
+              <p v-else class="py-6 text-center text-sm text-content-muted">
+                No text was extracted from this file.
+              </p>
+            </div>
+          </section>
+
+          <!-- Analyses -->
+          <section class="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
+            <div class="flex items-center justify-between border-b border-border px-5 py-4">
+              <h2 class="font-semibold text-content">Analyses</h2>
+              <RouterLink
+                v-if="resume.extraction_status === 'completed'"
                 :to="{ name: 'analyze', params: { id: resume.id } }"
-                class="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                class="text-sm font-medium text-brand transition hover:text-brand-hover"
               >
-                Run new analysis
-              </router-link>
+                Run new
+              </RouterLink>
             </div>
-            <div v-if="analyses.length === 0" class="text-center py-8 text-gray-500">
-              No analyses yet
-            </div>
-            <div v-else class="space-y-3">
-              <div
-                v-for="analysis in analyses"
-                :key="analysis.id"
-                class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition"
-              >
-                <div class="flex items-center gap-3">
-                  <div :class="[
-                    'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold',
-                    analysis.status === 'completed' ? 'bg-green-100 text-green-700' :
-                    analysis.status === 'failed' ? 'bg-red-100 text-red-700' :
-                    'bg-gray-100 text-gray-500'
-                  ]">
-                    {{ analysis.ats_score ?? '--' }}
-                  </div>
-                  <div>
-                    <div class="text-sm font-medium text-gray-900 capitalize">{{ analysis.type }} Analysis</div>
-                    <div class="text-xs text-gray-500">{{ formatDate(analysis.created_at) }}</div>
-                  </div>
-                </div>
-                <router-link
+
+            <EmptyState
+              v-if="!analyses.length"
+              title="No analyses yet"
+              :description="resume.extraction_status === 'completed'
+                ? 'Run one to see how this resume scores.'
+                : 'Once we finish reading the file you can run an analysis.'"
+            />
+
+            <ul v-else class="divide-y divide-border">
+              <li v-for="analysis in analyses" :key="analysis.id">
+                <RouterLink
                   :to="{ name: 'analysis', params: { resumeId: resume.id, analysisId: analysis.id } }"
-                  class="text-sm text-indigo-600 hover:text-indigo-700"
+                  class="flex items-center gap-4 px-5 py-4 transition hover:bg-surface-muted"
                 >
-                  View
-                </router-link>
-              </div>
-            </div>
-          </div>
+                  <ScoreChip :analysis="analysis" />
+                  <div class="min-w-0 flex-1">
+                    <p class="font-medium capitalize text-content">{{ typeLabel(analysis.type) }}</p>
+                    <p class="mt-0.5 text-sm text-content-muted">{{ formatRelative(analysis.created_at) }}</p>
+                  </div>
+                  <StatusPill :status="analysis.status" />
+                </RouterLink>
+              </li>
+            </ul>
+
+            <Pagination
+              v-if="analysisStore.lastPage > 1"
+              :page="analysisStore.page"
+              :last-page="analysisStore.lastPage"
+              :total="analysisStore.total"
+              label="analyses"
+              @change="loadAnalyses"
+            />
+          </section>
         </div>
 
-        <div class="space-y-6">
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 class="text-sm font-medium text-gray-500 mb-3">Actions</h3>
-            <div class="space-y-2">
-              <router-link
-                :to="{ name: 'analyze', params: { id: resume.id } }"
-                class="block w-full text-center bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition"
-              >
-                Run Analysis
-              </router-link>
-              <button
-                @click="handleDownload"
-                class="block w-full text-center bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition"
-              >
-                Download
-              </button>
-              <button
-                @click="handleDelete"
-                class="block w-full text-center bg-white border border-red-200 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-50 transition"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 class="text-sm font-medium text-gray-500 mb-3">Details</h3>
-            <dl class="space-y-2 text-sm">
-              <div class="flex justify-between">
-                <dt class="text-gray-500">Status</dt>
-                <dd>
-                  <span :class="[
-                    'px-2 py-0.5 rounded-full text-xs font-medium',
-                    resume.text_extracted ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                  ]">
-                    {{ resume.text_extracted ? 'Ready' : 'Processing' }}
-                  </span>
-                </dd>
+        <!-- Sidebar -->
+        <aside class="space-y-4">
+          <section class="rounded-xl border border-border bg-surface p-5 shadow-card">
+            <h2 class="text-sm font-medium text-content-muted">Details</h2>
+            <dl class="mt-3 space-y-3 text-sm">
+              <div class="flex items-center justify-between gap-3">
+                <dt class="text-content-muted">Status</dt>
+                <dd><ExtractionBadge :resume="resume" /></dd>
               </div>
-              <div class="flex justify-between">
-                <dt class="text-gray-500">Analyses</dt>
-                <dd class="text-gray-900">{{ resume.analyses_count }}</dd>
+              <div class="flex items-center justify-between gap-3">
+                <dt class="text-content-muted">Analyses</dt>
+                <dd class="tabular font-medium text-content">{{ resume.analyses_count }}</dd>
               </div>
-              <div class="flex justify-between">
-                <dt class="text-gray-500">Uploaded</dt>
-                <dd class="text-gray-900">{{ formatDate(resume.created_at) }}</dd>
+              <div class="flex items-center justify-between gap-3">
+                <dt class="text-content-muted">Size</dt>
+                <dd class="font-medium text-content">{{ resume.size_human }}</dd>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <dt class="text-content-muted">Uploaded</dt>
+                <dd class="font-medium text-content">{{ formatDate(resume.created_at) }}</dd>
               </div>
             </dl>
-          </div>
-        </div>
+          </section>
+
+          <button
+            class="w-full rounded-xl border border-critical-border px-4 py-2.5 text-sm font-medium text-critical transition hover:bg-critical-soft"
+            @click="handleDelete"
+          >
+            Delete resume
+          </button>
+        </aside>
       </div>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useResumeStore } from '@/stores/resume'
 import { useAnalysisStore } from '@/stores/analysis'
-import type { Resume, Analysis } from '@/types'
+import { useToastStore } from '@/stores/toast'
+import { confirm } from '@/composables/useConfirm'
+import { messageFor } from '@/services/errors'
+import { formatDate, formatRelative } from '@/services/format'
+import type { Resume } from '@/types'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import Skeleton from '@/components/ui/Skeleton.vue'
+import Pagination from '@/components/ui/Pagination.vue'
+import ExtractionBadge from '@/components/resume/ExtractionBadge.vue'
+import ScoreChip from '@/components/analysis/ScoreChip.vue'
+import StatusPill from '@/components/analysis/StatusPill.vue'
 
 const route = useRoute()
 const router = useRouter()
 const resumeStore = useResumeStore()
 const analysisStore = useAnalysisStore()
+const toast = useToastStore()
 
+const resumeId = Number(route.params.id)
 const resume = ref<Resume | null>(null)
-const analyses = ref<Analysis[]>([])
 const loading = ref(true)
-const showExtractedText = ref(false)
+const showText = ref(false)
+
+const analyses = computed(() => analysisStore.analyses)
+const isPdf = computed(() => !!resume.value?.mime_type?.includes('pdf'))
 
 const pdfViewUrl = computed(() => {
-  if (!resume.value) return ''
   const base = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
-  return `${base}/resumes/${resume.value.id}/view`
+  return `${base}/resumes/${resumeId}/view`
 })
 
+let pollTimer: ReturnType<typeof setInterval> | null = null
+
 onMounted(async () => {
-  const id = Number(route.params.id)
   try {
-    resume.value = await resumeStore.getResume(id)
-    await analysisStore.fetchAnalyses(id)
-    analyses.value = analysisStore.analyses
+    resume.value = await resumeStore.getResume(resumeId)
+    await loadAnalyses()
+    startPollingIfNeeded()
+  } catch (e) {
+    if (!resume.value) toast.error(await messageFor(e))
   } finally {
     loading.value = false
   }
 })
 
-function handleDownload() {
-  if (resume.value) {
-    const base = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
-    window.open(`${base}/resumes/${resume.value.id}/download`, '_blank')
+onBeforeUnmount(stopPolling)
+
+async function loadAnalyses(page = 1) {
+  try {
+    await analysisStore.fetchAnalyses(resumeId, page)
+  } catch (e) {
+    toast.error(await messageFor(e))
   }
+}
+
+/** Extraction runs on a worker, so the page has to find out when it finishes. */
+function startPollingIfNeeded() {
+  if (resume.value?.extraction_status !== 'pending' || pollTimer) return
+
+  pollTimer = setInterval(async () => {
+    const updated = await resumeStore.refreshResume(resumeId)
+    if (!updated) return stopPolling()
+
+    resume.value = updated
+
+    if (updated.extraction_status !== 'pending') {
+      stopPolling()
+      if (updated.extraction_status === 'completed') {
+        toast.success('Your resume is ready to analyse.')
+      }
+    }
+  }, 3000)
+}
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+}
+
+function typeLabel(type: string) {
+  return { ats: 'ATS check', content: 'Content review', formatting: 'Formatting check', comparison: 'Job comparison' }[type] ?? type
+}
+
+function handleDownload() {
+  const base = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+  window.open(`${base}/resumes/${resumeId}/download`, '_blank', 'noopener')
 }
 
 async function handleDelete() {
-  if (resume.value && confirm(`Delete "${resume.value.title}"?`)) {
-    await resumeStore.deleteResume(resume.value.id)
-    router.push('/resumes')
-  }
-}
+  if (!resume.value) return
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+  const confirmed = await confirm({
+    title: `Delete "${resume.value.title}"?`,
+    description: 'This also deletes its analyses. This cannot be undone.',
+    confirmLabel: 'Delete',
   })
+
+  if (!confirmed) return
+
+  try {
+    await resumeStore.deleteResume(resumeId)
+    toast.success('Resume deleted.')
+    router.push('/resumes')
+  } catch (e) {
+    toast.error(await messageFor(e))
+  }
 }
 </script>

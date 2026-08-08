@@ -14,7 +14,7 @@
         v-for="toast in toasts.toasts"
         :key="toast.id"
         :class="[
-          'pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border px-4 py-3 shadow-lg',
+          'pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border px-4 py-3 shadow-overlay',
           tone[toast.tone].shell,
         ]"
         :role="toast.tone === 'error' ? 'alert' : 'status'"
@@ -65,18 +65,18 @@ const toasts = useToastStore()
 
 const tone = {
   success: {
-    shell: 'border-emerald-200 bg-emerald-50 text-emerald-900',
-    icon: 'text-emerald-600',
+    shell: 'border-success-border bg-success-soft text-content',
+    icon: 'text-success',
     path: 'M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
   },
   error: {
-    shell: 'border-red-200 bg-red-50 text-red-900',
-    icon: 'text-red-600',
+    shell: 'border-critical-border bg-critical-soft text-content',
+    icon: 'text-critical',
     path: 'M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z',
   },
   info: {
-    shell: 'border-slate-200 bg-white text-slate-900',
-    icon: 'text-slate-500',
+    shell: 'border-border bg-surface-raised text-content',
+    icon: 'text-content-subtle',
     path: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
   },
 } as const

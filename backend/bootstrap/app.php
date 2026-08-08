@@ -27,6 +27,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/billing/webhook',
         ]);
 
+        // This is an API with no server-rendered login page. Without this, a
+        // guest request that does not explicitly ask for JSON (a browser tab,
+        // an <iframe> loading a PDF) tries to redirect to a route('login')
+        // that does not exist and 500s instead of returning 401.
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : '/');
+
         $middleware->alias([
             'plan' => \App\Http\Middleware\EnsurePlanAllows::class,
         ]);

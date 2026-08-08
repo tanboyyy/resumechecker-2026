@@ -1,130 +1,170 @@
 <template>
-  <div class="space-y-6">
-    <div class="flex items-center gap-4">
-      <router-link :to="{ name: 'resume', params: { id: resumeId } }" class="text-gray-500 hover:text-gray-700">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
-      </router-link>
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Run Analysis</h1>
-        <p class="text-gray-600 mt-1">Choose an analysis type</p>
-      </div>
-    </div>
+  <div class="mx-auto max-w-3xl space-y-6">
+    <PageHeader
+      title="Run an analysis"
+      description="Pick what you want checked."
+      :back-to="{ name: 'resume', params: { id: resumeId } }"
+      back-label="Back to resume"
+    />
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <button
+    <fieldset class="grid gap-3 sm:grid-cols-2">
+      <legend class="sr-only">Analysis type</legend>
+
+      <label
         v-for="type in analysisTypes"
         :key="type.value"
-        @click="selectedType = type.value"
+        class="relative flex cursor-pointer flex-col gap-2 rounded-xl border-2 bg-surface p-5 transition"
         :class="[
-          'p-6 rounded-xl border-2 text-left transition',
-          selectedType === type.value
-            ? 'border-indigo-500 bg-indigo-50'
-            : 'border-gray-200 bg-white hover:border-gray-300',
+          selectedType === type.value ? 'border-brand bg-brand-soft' : 'border-border hover:border-border-strong',
+          !isAllowed(type.value) && 'opacity-60',
         ]"
       >
-        <div class="flex items-center gap-3 mb-2">
-          <component :is="type.icon" class="w-6 h-6" :class="selectedType === type.value ? 'text-indigo-600' : 'text-gray-400'" />
-          <h3 class="font-semibold text-gray-900">{{ type.label }}</h3>
+        <input
+          v-model="selectedType"
+          type="radio"
+          name="analysis-type"
+          :value="type.value"
+          class="sr-only"
+        />
+
+        <div class="flex items-start justify-between gap-2">
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg"
+                :class="selectedType === type.value ? 'bg-brand text-on-brand' : 'bg-surface-muted text-content-subtle'">
+            <svg class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" :d="type.icon" />
+            </svg>
+          </span>
+          <span
+            v-if="!isAllowed(type.value)"
+            class="rounded-full bg-surface-muted px-2 py-0.5 text-xs font-semibold text-content-muted"
+          >
+            Pro
+          </span>
         </div>
-        <p class="text-sm text-gray-600">{{ type.description }}</p>
-      </button>
-    </div>
 
-    <div v-if="selectedType === 'comparison'" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <label class="block text-sm font-medium text-gray-700 mb-2">Job Description</label>
+        <span class="font-semibold text-content">{{ type.label }}</span>
+        <span class="text-sm text-content-muted">{{ type.description }}</span>
+      </label>
+    </fieldset>
+
+    <!-- Job description, only when it is required -->
+    <div v-if="selectedType === 'comparison'" class="rounded-xl border border-border bg-surface p-5 shadow-card">
+      <label for="job-description" class="block font-medium text-content">Job description</label>
+      <p class="mt-1 text-sm text-content-muted">
+        Paste the posting you're applying to. We'll compare your resume against it.
+      </p>
       <textarea
+        id="job-description"
         v-model="jobDescription"
-        rows="6"
-        class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-        placeholder="Paste the job description here..."
+        rows="8"
+        class="mt-3 w-full rounded-lg border border-border bg-canvas px-3 py-2 text-sm text-content placeholder:text-content-subtle focus:border-brand"
+        placeholder="Paste the full job description here…"
       />
+      <p class="mt-2 text-xs" :class="jobDescriptionValid ? 'text-content-subtle' : 'text-warning'">
+        {{ jobDescription.length }} / 10,000 characters
+        <span v-if="!jobDescriptionValid"> · at least 50 needed</span>
+      </p>
     </div>
 
-    <div class="flex justify-end">
-      <button
-        @click="handleAnalyze"
-        :disabled="!selectedType || analysisStore.creating"
-        :class="[
-          'px-6 py-3 rounded-lg font-medium transition',
-          selectedType && !analysisStore.creating
-            ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-            : 'bg-gray-200 text-gray-500 cursor-not-allowed',
-        ]"
-      >
-        {{ analysisStore.creating ? 'Starting...' : 'Run Analysis' }}
-      </button>
-    </div>
-
-    <div v-if="error" class="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-      <p class="text-red-700 text-sm">{{ error }}</p>
-      <router-link
+    <div v-if="error" class="rounded-xl border border-critical-border bg-critical-soft p-4">
+      <p class="text-sm text-content">{{ error }}</p>
+      <RouterLink
         v-if="upgrade"
         :to="upgrade.to"
-        class="mt-2 inline-block text-sm font-semibold text-red-800 underline underline-offset-2"
+        class="mt-2 inline-block text-sm font-semibold text-critical underline underline-offset-2"
       >
         {{ upgrade.label }}
-      </router-link>
+      </RouterLink>
+    </div>
+
+    <div class="flex justify-end gap-3">
+      <RouterLink
+        :to="{ name: 'resume', params: { id: resumeId } }"
+        class="rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-content transition hover:bg-surface-muted"
+      >
+        Cancel
+      </RouterLink>
+      <button
+        class="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-on-brand transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
+        :disabled="!canSubmit"
+        @click="handleAnalyze"
+      >
+        <Spinner v-if="analysisStore.creating" size="0.9rem" />
+        {{ analysisStore.creating ? 'Starting…' : 'Run analysis' }}
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, h } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAnalysisStore } from '@/stores/analysis'
+import { useBillingStore } from '@/stores/billing'
 import { messageFor, upgradeActionFor } from '@/services/errors'
 import type { Toast } from '@/stores/toast'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import Spinner from '@/components/ui/Spinner.vue'
 
 const route = useRoute()
 const router = useRouter()
 const analysisStore = useAnalysisStore()
+const billing = useBillingStore()
 
 const resumeId = Number(route.params.id)
-const selectedType = ref<string | null>(null)
+const selectedType = ref<string>('ats')
 const jobDescription = ref('')
 const error = ref('')
 const upgrade = ref<Toast['action'] | null>(null)
 
-const AnalysisIcon = {
-  render() {
-    return h('svg', { fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', 'stroke-width': '2' }, [
-      h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', d: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' })
-    ])
-  }
-}
-
 const analysisTypes = [
   {
     value: 'ats',
-    label: 'ATS Optimization',
-    description: 'Check how well your resume passes Applicant Tracking Systems. Get a score and improvement tips.',
-    icon: AnalysisIcon,
+    label: 'ATS check',
+    description: 'How well applicant tracking systems can parse and rank your resume.',
+    icon: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2zM9 9h6v6H9V9z',
   },
   {
     value: 'content',
-    label: 'Content Review',
-    description: 'Get detailed feedback on your resume content, language, and impact statements.',
-    icon: AnalysisIcon,
+    label: 'Content review',
+    description: 'Whether your bullet points show impact, with concrete rewrites.',
+    icon: 'M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
   },
   {
     value: 'formatting',
-    label: 'Formatting Check',
-    description: 'Review your resume structure, consistency, and visual presentation.',
-    icon: AnalysisIcon,
+    label: 'Formatting check',
+    description: 'Structure, spacing, headings, and date consistency.',
+    icon: 'M4 5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5zM4 13a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-6zM16 13a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-6z',
   },
   {
     value: 'comparison',
-    label: 'Job Comparison',
-    description: 'Compare your resume against a specific job description for targeted improvements.',
-    icon: AnalysisIcon,
+    label: 'Job comparison',
+    description: 'Match your resume against a specific posting and find the gaps.',
+    icon: 'M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z',
   },
 ]
 
-async function handleAnalyze() {
-  if (!selectedType.value) return
+const allowedTypes = computed(
+  () => (billing.subscription?.limits?.analysis_types as string[] | undefined) ?? ['ats']
+)
 
+function isAllowed(type: string) {
+  return allowedTypes.value.includes(type)
+}
+
+const jobDescriptionValid = computed(
+  () => selectedType.value !== 'comparison' || jobDescription.value.trim().length >= 50
+)
+
+const canSubmit = computed(
+  () => !!selectedType.value && !analysisStore.creating && jobDescriptionValid.value
+)
+
+onMounted(() => {
+  billing.fetchSubscription().catch(() => undefined)
+})
+
+async function handleAnalyze() {
   error.value = ''
   upgrade.value = null
 
@@ -132,21 +172,13 @@ async function handleAnalyze() {
     const analysis = await analysisStore.createAnalysis(
       resumeId,
       selectedType.value,
-      jobDescription.value || undefined,
+      jobDescription.value.trim() || undefined
     )
 
-    if (!analysis?.id) {
-      error.value = 'Analysis created but no ID returned. Please try again.'
-      return
-    }
-
     router.push({ name: 'analysis', params: { resumeId, analysisId: analysis.id } })
-  } catch (e: unknown) {
+  } catch (e) {
     error.value = await messageFor(e)
-
-    // Plan limits come back with an upgrade link; make it reachable.
-    const action = await upgradeActionFor(e)
-    if (action) upgrade.value = action
+    upgrade.value = (await upgradeActionFor(e)) ?? null
   }
 }
 </script>
