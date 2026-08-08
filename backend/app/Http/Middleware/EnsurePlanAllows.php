@@ -44,7 +44,10 @@ class EnsurePlanAllows
             return $next($request);
         }
 
+        // Failed analyses are not charged for: an outage on our side should not
+        // cost the user one of their monthly runs.
         $used = $request->user()->analyses()
+            ->whereIn('analyses.status', ['pending', 'processing', 'completed'])
             ->whereMonth('analyses.created_at', now()->month)
             ->whereYear('analyses.created_at', now()->year)
             ->count();

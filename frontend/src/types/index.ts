@@ -14,6 +14,8 @@ export interface Resume {
   size: number
   size_human: string
   text_extracted: boolean
+  extraction_status: 'pending' | 'completed' | 'failed'
+  extraction_error: string | null
   extracted_text?: string
   analyses_count: number
   created_at: string
@@ -31,13 +33,25 @@ export interface AnalysisFeedback {
   created_at: string
 }
 
+/** The normalised, display-ready shape the API guarantees for a completed analysis. */
+export interface AnalysisResult {
+  score: number | null
+  summary: string | null
+  strengths: string[]
+  weaknesses: string[]
+  recommendations: string[]
+  keywords_matched: string[]
+  keywords_missing: string[]
+  gaps: string[]
+}
+
 export interface Analysis {
   id: number
   resume_id: number
   type: 'ats' | 'content' | 'formatting' | 'comparison'
   status: 'pending' | 'processing' | 'completed' | 'failed'
   ats_score: number | null
-  raw_response: Record<string, unknown> | null
+  result: AnalysisResult | null
   job_description: string | null
   tokens_used: number | null
   error_message: string | null

@@ -17,6 +17,7 @@ class Analysis extends Model
         'status',
         'ats_score',
         'raw_response',
+        'result',
         'job_description',
         'prompt_used',
         'tokens_used',
@@ -29,6 +30,7 @@ class Analysis extends Model
         return [
             'ats_score' => 'integer',
             'raw_response' => 'array',
+            'result' => 'array',
             'tokens_used' => 'integer',
             'completed_at' => 'datetime',
         ];

@@ -60,11 +60,13 @@ class BillingController extends Controller
         $subscription = $user->subscription;
 
         $analysesThisMonth = $user->analyses()
+            ->whereIn('analyses.status', ['pending', 'processing', 'completed'])
             ->whereMonth('analyses.created_at', now()->month)
             ->whereYear('analyses.created_at', now()->year)
             ->count();
 
-        $analysisLimit = $subscription?->getAnalysisLimit() ?? 3;
+        $analysisLimit = $subscription?->getAnalysisLimit()
+            ?? config('plans.plans.free.limits.analyses_per_month');
 
         return response()->json([
             'analyses_used' => $analysesThisMonth,

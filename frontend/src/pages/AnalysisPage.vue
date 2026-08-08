@@ -153,15 +153,5 @@ async function handleExport() {
 
 // Rendered as text, never as HTML: this content originates in an uploaded
 // resume and is echoed back by the model, so it is untrusted.
-const summary = computed(() => {
-  const raw = analysis.value?.raw_response
-  if (!raw) return ''
-
-  for (const key of ['summary', 'match_analysis', 'overall']) {
-    const value = raw[key]
-    if (typeof value === 'string' && value.trim()) return value.trim()
-  }
-
-  return ''
-})
+const summary = computed(() => analysis.value?.result?.summary ?? '')
 </script>

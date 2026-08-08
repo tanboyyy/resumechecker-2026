@@ -15,7 +15,7 @@ class AnalysisResource extends JsonResource
             'type' => $this->type,
             'status' => $this->status,
             'ats_score' => $this->ats_score,
-            'raw_response' => $this->when($this->isCompleted(), $this->raw_response),
+            'result' => $this->when($this->isCompleted(), $this->result),
             'job_description' => $this->when(
                 $this->type === 'comparison',
                 $this->job_description
