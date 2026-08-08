@@ -3,15 +3,15 @@
 namespace App\Jobs;
 
 use App\Models\Resume;
-use App\Services\OpenAIService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Smalot\PdfParser\Parser;
 use PhpOffice\PhpWord\IOFactory;
+use Smalot\PdfParser\Parser;
 
 class ExtractResumeText implements ShouldQueue
 {
@@ -20,34 +20,70 @@ class ExtractResumeText implements ShouldQueue
     public int $tries = 3;
     public int $timeout = 120;
 
+    /**
+     * Below this many characters a resume is not worth analysing — the model
+     * would invent feedback about a document it effectively never read.
+     */
+    private const MINIMUM_USEFUL_LENGTH = 100;
+
     public function __construct(public Resume $resume)
     {
     }
 
     public function handle(): void
     {
-        $text = $this->extractTextFromDisk();
+        try {
+            $text = $this->extractTextFromDisk();
+        } catch (UnreadableResumeException $e) {
+            $this->markFailed($e->getMessage());
 
-        if (empty(trim($text))) {
-            $text = $this->extractWithOpenAI($text);
+            return;
+        } catch (\Throwable $e) {
+            // Storage and other infrastructure faults are worth retrying.
+            Log::error('Resume text extraction errored', [
+                'resume_id' => $this->resume->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
+
+        $text = trim($text);
+
+        if (mb_strlen($text) < self::MINIMUM_USEFUL_LENGTH) {
+            $this->markFailed(
+                'We could not read any text from this file. If it is a scanned or image-based '
+                . 'PDF, export a text version from your editor and upload that instead.'
+            );
+
+            return;
         }
 
         $this->resume->update([
             'text_extracted' => true,
+            'extraction_status' => 'completed',
+            'extraction_error' => null,
             'extracted_text' => $text,
         ]);
     }
 
     public function failed(\Throwable $exception): void
     {
-        $this->resume->update([
-            'text_extracted' => false,
-            'extracted_text' => null,
-        ]);
+        $this->markFailed('Something went wrong while reading this file. Please try uploading it again.');
 
-        \Illuminate\Support\Facades\Log::error('Text extraction failed', [
+        Log::error('Resume text extraction failed permanently', [
             'resume_id' => $this->resume->id,
             'error' => $exception->getMessage(),
+        ]);
+    }
+
+    private function markFailed(string $reason): void
+    {
+        $this->resume->update([
+            'text_extracted' => false,
+            'extraction_status' => 'failed',
+            'extraction_error' => $reason,
+            'extracted_text' => null,
         ]);
     }
 
@@ -55,17 +91,20 @@ class ExtractResumeText implements ShouldQueue
     {
         $contents = Storage::disk($this->resume->disk)->get($this->resume->storage_path);
 
-        if ($contents === null) {
-            return '';
+        if ($contents === null || $contents === '') {
+            throw new UnreadableResumeException('This file appears to be empty. Please upload a different file.');
         }
 
-        $mimeType = $this->resume->mime_type;
+        $mimeType = $this->resume->mime_type ?? '';
 
         return match (true) {
             str_contains($mimeType, 'pdf') => $this->extractPdf($contents),
-            str_contains($mimeType, 'word') => $this->extractWord($contents),
+            str_contains($mimeType, 'word'),
+            str_contains($mimeType, 'officedocument') => $this->extractWord($contents),
             str_contains($mimeType, 'text') => $contents,
-            default => '',
+            default => throw new UnreadableResumeException(
+                'We can only read PDF and DOCX files. Please upload one of those formats.'
+            ),
         };
     }
 
@@ -75,10 +114,13 @@ class ExtractResumeText implements ShouldQueue
         file_put_contents($tempFile, $contents);
 
         try {
-            $parser = new Parser();
-            $pdf = $parser->parseFile($tempFile);
-
-            return $pdf->getText();
+            return (new Parser())->parseFile($tempFile)->getText();
+        } catch (\Throwable $e) {
+            throw new UnreadableResumeException(
+                'We could not read this PDF. It may be password protected, corrupted, or a scanned image. '
+                . 'Try exporting a fresh PDF from your document editor.',
+                previous: $e
+            );
         } finally {
             @unlink($tempFile);
         }
@@ -102,21 +144,13 @@ class ExtractResumeText implements ShouldQueue
             }
 
             return $text;
+        } catch (\Throwable $e) {
+            throw new UnreadableResumeException(
+                'We could not read this Word document. Try re-saving it as .docx, or export it as a PDF.',
+                previous: $e
+            );
         } finally {
             @unlink($tempFile);
         }
-    }
-
-    private function extractWithOpenAI(string $currentText): string
-    {
-        $apiKey = config('services.openai.api_key');
-
-        if (empty($apiKey)) {
-            return $currentText;
-        }
-
-        $openai = new OpenAIService();
-
-        return $openai->extractText($currentText);
     }
 }

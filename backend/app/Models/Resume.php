@@ -22,6 +22,8 @@ class Resume extends Model
         'size',
         'extracted_text',
         'text_extracted',
+        'extraction_status',
+        'extraction_error',
     ];
 
     protected $hidden = [
@@ -39,6 +41,16 @@ class Resume extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function isReadable(): bool
+    {
+        return $this->extraction_status === 'completed';
+    }
+
+    public function extractionFailed(): bool
+    {
+        return $this->extraction_status === 'failed';
     }
 
     public function analyses(): HasMany

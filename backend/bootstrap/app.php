@@ -21,6 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
         ]);
+        // Stripe posts here server-to-server with no session and no CSRF token.
+        // Authenticity is established by the signature check in the controller.
+        $middleware->validateCsrfTokens(except: [
+            'api/billing/webhook',
+        ]);
+
         $middleware->alias([
             'plan' => \App\Http\Middleware\EnsurePlanAllows::class,
         ]);

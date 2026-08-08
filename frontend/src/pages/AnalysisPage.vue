@@ -67,9 +67,9 @@
             </div>
           </div>
 
-          <div v-if="analysis.raw_response" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div v-if="summary" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Summary</h2>
-            <div class="prose prose-sm max-w-none text-gray-700" v-html="renderMarkdown(formatRawResponse(analysis.raw_response))"></div>
+            <p class="text-gray-700 text-sm leading-relaxed whitespace-pre-line">{{ summary }}</p>
           </div>
         </div>
       </div>
@@ -151,33 +151,17 @@ async function handleExport() {
   }
 }
 
-function renderMarkdown(text: string): string {
-  return text
-    .replace(/^### (.+)$/gm, '<h3 class="text-sm font-semibold text-gray-900 mt-3 mb-1">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 class="text-base font-semibold text-gray-900 mt-4 mb-2">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 class="text-lg font-bold text-gray-900 mt-4 mb-2">$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc text-gray-700">$1</li>')
-    .replace(/^(\d+)\. (.+)$/gm, '<li class="ml-4 list-decimal text-gray-700">$2</li>')
-    .replace(/^---$/gm, '<hr class="my-3 border-gray-200">')
-    .replace(/\n\n/g, '<br><br>')
-}
+// Rendered as text, never as HTML: this content originates in an uploaded
+// resume and is echoed back by the model, so it is untrusted.
+const summary = computed(() => {
+  const raw = analysis.value?.raw_response
+  if (!raw) return ''
 
-function formatRawResponse(response: Record<string, unknown>): string {
-  if (response.summary) return String(response.summary)
-  if (response.overall) return String(response.overall)
-  if (response.match_analysis) return String(response.match_analysis)
-  if (response.rewritten_sections) {
-    return (response.rewritten_sections as Array<Record<string, string>>)
-      .map(s => `## ${s.section}\n\n**Original:** ${s.original}\n\n**Rewritten:** ${s.rewritten}\n\n**Why:** ${s.explanation}`)
-      .join('\n\n---\n\n')
+  for (const key of ['summary', 'match_analysis', 'overall']) {
+    const value = raw[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
   }
-  if (response.questions) {
-    return (response.questions as Array<Record<string, string>>)
-      .map((q, i) => `${i + 1}. [${q.difficulty}] ${q.question}\n   Hint: ${q.answer_hint || 'N/A'}`)
-      .join('\n\n')
-  }
-  return JSON.stringify(response, null, 2)
-}
+
+  return ''
+})
 </script>

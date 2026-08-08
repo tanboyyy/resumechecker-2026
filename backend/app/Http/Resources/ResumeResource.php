@@ -17,6 +17,8 @@ class ResumeResource extends JsonResource
             'size' => $this->size,
             'size_human' => $this->getFileSizeHuman(),
             'text_extracted' => $this->text_extracted,
+            'extraction_status' => $this->extraction_status,
+            'extraction_error' => $this->extraction_error,
             'extracted_text' => $this->when($request->routeIs('resumes.show'), $this->extracted_text),
             'analyses_count' => $this->whenCounted('analyses'),
             'created_at' => $this->created_at,
