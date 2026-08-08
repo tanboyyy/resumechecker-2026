@@ -18,9 +18,10 @@
         <button
           v-if="billing.subscription.plan !== 'free'"
           @click="manageSubscription"
-          class="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+          :disabled="openingPortal"
+          class="text-sm text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
         >
-          Manage Subscription
+          {{ openingPortal ? 'Opening…' : 'Manage subscription' }}
         </button>
       </div>
       <div v-else>
@@ -77,10 +78,14 @@
           <button
             v-if="plan.id !== 'free' && billing.subscription?.plan !== plan.id"
             @click="handleUpgrade(plan.id)"
-            :disabled="loading"
+            :disabled="pendingPlan !== null"
             class="w-full mt-6 px-4 py-2 rounded-lg font-medium transition bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
           >
-            {{ billing.subscription?.plan === 'free' ? 'Upgrade' : 'Switch' }}
+            {{
+              pendingPlan === plan.id
+                ? 'Starting checkout…'
+                : billing.subscription?.plan === 'free' ? 'Upgrade' : 'Switch'
+            }}
           </button>
           <div v-else-if="billing.subscription?.plan === plan.id" class="mt-6 text-center text-sm font-medium text-indigo-600">
             Current Plan
@@ -92,22 +97,53 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useBillingStore } from '@/stores/billing'
+import { useToastStore } from '@/stores/toast'
+import { messageFor } from '@/services/errors'
 
 const billing = useBillingStore()
+const toast = useToastStore()
 
-onMounted(() => {
-  billing.fetchAll()
+/** Which plan's button is mid-request, so only that one shows a spinner. */
+const pendingPlan = ref<string | null>(null)
+const openingPortal = ref(false)
+
+onMounted(async () => {
+  try {
+    await billing.fetchAll()
+  } catch (e) {
+    toast.error(await messageFor(e))
+  }
 })
 
 async function handleUpgrade(planId: string) {
-  const url = await billing.checkout(planId)
-  window.location.href = url
+  pendingPlan.value = planId
+
+  try {
+    const url = await billing.checkout(planId)
+
+    if (!url) throw new Error('We could not start checkout. Please try again.')
+
+    window.location.href = url
+  } catch (e) {
+    toast.error(await messageFor(e))
+    pendingPlan.value = null
+  }
 }
 
 async function manageSubscription() {
-  const url = await billing.openPortal()
-  window.location.href = url
+  openingPortal.value = true
+
+  try {
+    const url = await billing.openPortal()
+
+    if (!url) throw new Error('We could not open the billing portal. Please try again.')
+
+    window.location.href = url
+  } catch (e) {
+    toast.error(await messageFor(e))
+    openingPortal.value = false
+  }
 }
 </script>

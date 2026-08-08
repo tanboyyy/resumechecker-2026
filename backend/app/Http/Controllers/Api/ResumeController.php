@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Resume\StoreResumeRequest;
 use App\Http\Resources\ResumeResource;
 use App\Models\Resume;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ResumeController extends Controller
@@ -48,7 +50,7 @@ class ResumeController extends Controller
 
     public function show(Request $request, Resume $resume)
     {
-        $this->authorizeAction('view', $resume);
+        $this->authorize('view', $resume);
 
         $resume->loadCount('analyses');
 
@@ -57,7 +59,7 @@ class ResumeController extends Controller
 
     public function destroy(Request $request, Resume $resume): JsonResponse
     {
-        $this->authorizeAction('delete', $resume);
+        $this->authorize('delete', $resume);
 
         $resume->deleteFile();
         $resume->delete();
@@ -67,13 +69,12 @@ class ResumeController extends Controller
 
     public function download(Request $request, Resume $resume)
     {
-        $this->authorizeAction('view', $resume);
+        $this->authorize('view', $resume);
+
+        $disk = $this->diskFor($resume);
 
         if ($resume->disk === 'local') {
-            return response()->download(
-                storage_path('app/private/' . $resume->storage_path),
-                $resume->original_filename
-            );
+            return $disk->download($resume->storage_path, $resume->original_filename);
         }
 
         return response()->redirectTo($resume->getTemporaryUrl(300));
@@ -81,12 +82,12 @@ class ResumeController extends Controller
 
     public function viewPdf(Request $request, Resume $resume)
     {
-        $this->authorizeAction('view', $resume);
+        $this->authorize('view', $resume);
+
+        $disk = $this->diskFor($resume);
 
         if ($resume->disk === 'local') {
-            $path = storage_path('app/private/' . $resume->storage_path);
-
-            return response()->file($path, [
+            return $disk->response($resume->storage_path, $resume->original_filename, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'inline; filename="' . $resume->original_filename . '"',
             ]);
@@ -95,12 +96,18 @@ class ResumeController extends Controller
         return response()->redirectTo($resume->getTemporaryUrl(300));
     }
 
-    private function authorizeAction(string $action, Resume $resume): void
+    /**
+     * Resolve the resume's disk, failing with a 404 rather than a 500 when the
+     * stored file has gone missing underneath the database row.
+     */
+    private function diskFor(Resume $resume): Filesystem
     {
-        $user = request()->user();
+        $disk = Storage::disk($resume->disk);
 
-        if ($resume->user_id !== $user->id) {
-            abort(403, 'Unauthorized');
+        if (!$disk->exists($resume->storage_path)) {
+            abort(404, 'This file is no longer available.');
         }
+
+        return $disk;
     }
 }

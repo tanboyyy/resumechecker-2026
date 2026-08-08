@@ -21,6 +21,7 @@ class User extends Authenticatable
         'google_id',
         'avatar',
         'provider',
+        'stripe_customer_id',
     ];
 
     protected $hidden = [
@@ -68,14 +69,30 @@ class User extends Authenticatable
 
     public static function findOrCreateFromSocialite(SocialiteUser $socialiteUser): self
     {
-        return static::updateOrCreate(
-            ['google_id' => $socialiteUser->getId()],
-            [
-                'name' => $socialiteUser->getName(),
+        $attributes = [
+            'name' => $socialiteUser->getName(),
+            'avatar' => $socialiteUser->getAvatar(),
+            'provider' => 'google',
+        ];
+
+        // Match on google_id first, then fall back to the verified email so an
+        // account created before Google sign-in is linked rather than colliding
+        // with the unique email constraint.
+        $user = static::where('google_id', $socialiteUser->getId())->first()
+            ?? static::where('email', $socialiteUser->getEmail())->first();
+
+        if ($user) {
+            $user->update($attributes + [
+                'google_id' => $socialiteUser->getId(),
                 'email' => $socialiteUser->getEmail(),
-                'avatar' => $socialiteUser->getAvatar(),
-                'provider' => 'google',
-            ]
-        );
+            ]);
+
+            return $user;
+        }
+
+        return static::create($attributes + [
+            'google_id' => $socialiteUser->getId(),
+            'email' => $socialiteUser->getEmail(),
+        ]);
     }
 }

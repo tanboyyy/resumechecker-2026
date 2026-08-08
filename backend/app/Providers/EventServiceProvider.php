@@ -6,7 +6,9 @@ use App\Models\Analysis;
 use App\Models\Resume;
 use App\Observers\AnalysisObserver;
 use App\Observers\ResumeObserver;
+use App\Policies\ResumePolicy;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Gate;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -23,5 +25,7 @@ class EventServiceProvider extends ServiceProvider
     {
         Resume::observe(ResumeObserver::class);
         Analysis::observe(AnalysisObserver::class);
+
+        Gate::policy(Resume::class, ResumePolicy::class);
     }
 }

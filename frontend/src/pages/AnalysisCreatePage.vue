@@ -59,6 +59,13 @@
 
     <div v-if="error" class="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
       <p class="text-red-700 text-sm">{{ error }}</p>
+      <router-link
+        v-if="upgrade"
+        :to="upgrade.to"
+        class="mt-2 inline-block text-sm font-semibold text-red-800 underline underline-offset-2"
+      >
+        {{ upgrade.label }}
+      </router-link>
     </div>
   </div>
 </template>
@@ -67,6 +74,8 @@
 import { ref, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAnalysisStore } from '@/stores/analysis'
+import { messageFor, upgradeActionFor } from '@/services/errors'
+import type { Toast } from '@/stores/toast'
 
 const route = useRoute()
 const router = useRouter()
@@ -76,6 +85,7 @@ const resumeId = Number(route.params.id)
 const selectedType = ref<string | null>(null)
 const jobDescription = ref('')
 const error = ref('')
+const upgrade = ref<Toast['action'] | null>(null)
 
 const AnalysisIcon = {
   render() {
@@ -116,6 +126,7 @@ async function handleAnalyze() {
   if (!selectedType.value) return
 
   error.value = ''
+  upgrade.value = null
 
   try {
     const analysis = await analysisStore.createAnalysis(
@@ -131,9 +142,11 @@ async function handleAnalyze() {
 
     router.push({ name: 'analysis', params: { resumeId, analysisId: analysis.id } })
   } catch (e: unknown) {
-    const msg = (e as any)?.response?.data?.message
-      || (e instanceof Error ? e.message : 'Failed to start analysis. Please try again.')
-    error.value = msg
+    error.value = await messageFor(e)
+
+    // Plan limits come back with an upgrade link; make it reachable.
+    const action = await upgradeActionFor(e)
+    if (action) upgrade.value = action
   }
 }
 </script>

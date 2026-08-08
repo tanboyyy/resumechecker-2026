@@ -17,7 +17,7 @@ class AnalysisController extends Controller
 {
     public function index(Request $request, Resume $resume)
     {
-        $this->authorizeAction('view', $resume);
+        $this->authorize('view', $resume);
 
         $analyses = $resume->analyses()
             ->with('feedback')
@@ -29,7 +29,7 @@ class AnalysisController extends Controller
 
     public function store(CreateAnalysisRequest $request, Resume $resume): JsonResponse
     {
-        $this->authorizeAction('analyze', $resume);
+        $this->authorize('analyze', $resume);
 
         $validated = $request->validated();
 
@@ -46,11 +46,9 @@ class AnalysisController extends Controller
 
     public function show(Request $request, Resume $resume, Analysis $analysis)
     {
-        $this->authorizeAction('view', $resume);
+        $this->authorize('view', $resume);
 
-        if ($analysis->resume_id !== $resume->id) {
-            abort(404, 'Analysis not found');
-        }
+        $this->assertBelongsToResume($analysis, $resume);
 
         $analysis->load('feedback');
 
@@ -59,11 +57,9 @@ class AnalysisController extends Controller
 
     public function destroy(Request $request, Resume $resume, Analysis $analysis): JsonResponse
     {
-        $this->authorizeAction('view', $resume);
+        $this->authorize('view', $resume);
 
-        if ($analysis->resume_id !== $resume->id) {
-            abort(404, 'Analysis not found');
-        }
+        $this->assertBelongsToResume($analysis, $resume);
 
         $analysis->delete();
 
@@ -72,11 +68,9 @@ class AnalysisController extends Controller
 
     public function export(Request $request, Resume $resume, Analysis $analysis)
     {
-        $this->authorizeAction('view', $resume);
+        $this->authorize('view', $resume);
 
-        if ($analysis->resume_id !== $resume->id) {
-            abort(404, 'Analysis not found');
-        }
+        $this->assertBelongsToResume($analysis, $resume);
 
         $user = $request->user();
         if (!$user->isPro()) {
@@ -96,11 +90,9 @@ class AnalysisController extends Controller
 
     public function status(Request $request, Resume $resume, Analysis $analysis)
     {
-        $this->authorizeAction('view', $resume);
+        $this->authorize('view', $resume);
 
-        if ($analysis->resume_id !== $resume->id) {
-            abort(404, 'Analysis not found');
-        }
+        $this->assertBelongsToResume($analysis, $resume);
 
         return response()->json([
             'id' => $analysis->id,
@@ -111,12 +103,14 @@ class AnalysisController extends Controller
         ]);
     }
 
-    private function authorizeAction(string $action, Resume $resume): void
+    /**
+     * An analysis id from another resume must read as missing, not forbidden,
+     * so the URL cannot be used to probe for other people's records.
+     */
+    private function assertBelongsToResume(Analysis $analysis, Resume $resume): void
     {
-        $user = request()->user();
-
-        if ($resume->user_id !== $user->id) {
-            abort(403, 'Unauthorized');
+        if ($analysis->resume_id !== $resume->id) {
+            abort(404, 'Analysis not found');
         }
     }
 }

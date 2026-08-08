@@ -38,7 +38,20 @@ class EnsurePlanAllows
 
     private function ensureAnalysisLimit(Request $request, Subscription $subscription, array $limits, Closure $next): Response
     {
-        $limit = $limits['analyses_per_month'] ?? 3;
+        $allowedTypes = $limits['analysis_types'] ?? ['ats'];
+        $requestedType = (string) $request->input('type');
+
+        if ($requestedType !== '' && !in_array($requestedType, $allowedTypes, true)) {
+            return response()->json([
+                'message' => 'This analysis type is not included in your current plan.',
+                'requested_type' => $requestedType,
+                'allowed_types' => array_values($allowedTypes),
+                'plan' => $subscription->plan,
+                'upgrade_url' => '/billing',
+            ], 403);
+        }
+
+        $limit = $limits['analyses_per_month'] ?? config('plans.plans.free.limits.analyses_per_month');
 
         if ($limit === -1) {
             return $next($request);

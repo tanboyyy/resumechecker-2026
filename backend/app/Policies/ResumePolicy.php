@@ -22,6 +22,6 @@ class ResumePolicy
 
     public function analyze(User $user, Resume $resume): bool
     {
-        return $user->id === $resume->user_id && $resume->text_extracted;
+        return $user->id === $resume->user_id && $resume->isReadable();
     }
 }

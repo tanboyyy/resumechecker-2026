@@ -84,10 +84,13 @@ import { useAnalysisStore } from '@/stores/analysis'
 import { useAnalysisPolling } from '@/composables/useAnalysisPolling'
 import ScoreGauge from '@/components/charts/ScoreGauge.vue'
 import FeedbackItem from '@/components/analysis/FeedbackItem.vue'
+import { useToastStore } from '@/stores/toast'
+import { messageFor, upgradeActionFor } from '@/services/errors'
 import api from '@/services/api'
 
 const route = useRoute()
 const analysisStore = useAnalysisStore()
+const toast = useToastStore()
 
 const resumeId = Number(route.params.resumeId)
 const analysisId = Number(route.params.analysisId)
@@ -135,17 +138,24 @@ onMounted(async () => {
 
 async function handleExport() {
   exporting.value = true
+
   try {
     const response = await api.get(`/resumes/${resumeId}/analyses/${analysisId}/export`, {
       responseType: 'blob',
     })
-    const blob = new Blob([response.data], { type: 'application/pdf' })
-    const url = URL.createObjectURL(blob)
+
+    const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
     const link = document.createElement('a')
     link.href = url
-    link.download = `analysis-${analysisId}.pdf`
+    link.download = `resumeai-${analysis.value?.type ?? 'analysis'}-${analysisId}.pdf`
     link.click()
     URL.revokeObjectURL(url)
+
+    toast.success('Report downloaded.')
+  } catch (e) {
+    // A refused export still arrives as a Blob, so the reason has to be read
+    // out of it rather than written to disk as a .pdf.
+    toast.error(await messageFor(e), await upgradeActionFor(e))
   } finally {
     exporting.value = false
   }

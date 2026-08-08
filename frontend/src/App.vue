@@ -1,14 +1,8 @@
 <template>
   <router-view />
+  <ToastHost />
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-
-const auth = useAuthStore()
-
-onMounted(() => {
-  auth.fetchUser()
-})
+import ToastHost from '@/components/ui/ToastHost.vue'
 </script>

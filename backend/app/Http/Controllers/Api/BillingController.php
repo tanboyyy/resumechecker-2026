@@ -16,7 +16,14 @@ class BillingController extends Controller
 {
     public function __construct()
     {
-        Stripe::setApiKey(config('services.stripe.secret'));
+        if ($secret = config('services.stripe.secret')) {
+            Stripe::setApiKey($secret);
+        }
+    }
+
+    private function billingConfigured(): bool
+    {
+        return (bool) config('services.stripe.secret');
     }
 
     public function plans(): JsonResponse
@@ -81,12 +88,20 @@ class BillingController extends Controller
             'plan' => 'required|string|in:pro,enterprise',
         ]);
 
+        if (!$this->billingConfigured()) {
+            return response()->json([
+                'message' => 'Payments are not available right now. Please try again later.',
+            ], 503);
+        }
+
         $user = $request->user();
         $plan = config("plans.plans.{$validated['plan']}");
-        $priceId = $plan['stripe_price_id'];
+        $priceId = $plan['stripe_price_id'] ?? null;
 
         if (!$priceId) {
-            return response()->json(['message' => 'Plan not available'], 400);
+            return response()->json([
+                'message' => 'That plan is not available for purchase yet.',
+            ], 400);
         }
 
         try {
@@ -115,11 +130,18 @@ class BillingController extends Controller
 
     public function portal(Request $request): JsonResponse
     {
-        $user = $request->user();
-        $subscription = $user->subscription;
+        if (!$this->billingConfigured()) {
+            return response()->json([
+                'message' => 'Billing management is not available right now. Please try again later.',
+            ], 503);
+        }
 
-        if (!$subscription || !$subscription->stripe_id) {
-            return response()->json(['message' => 'No active subscription'], 400);
+        $user = $request->user();
+
+        if (!$user->stripe_customer_id) {
+            return response()->json([
+                'message' => 'You do not have a paid subscription to manage.',
+            ], 400);
         }
 
         try {
@@ -164,10 +186,8 @@ class BillingController extends Controller
 
     private function getOrCreateStripeCustomer($user): string
     {
-        $subscription = $user->subscription;
-
-        if ($subscription && $subscription->stripe_id) {
-            return $subscription->stripe_id;
+        if ($user->stripe_customer_id) {
+            return $user->stripe_customer_id;
         }
 
         $customer = \Stripe\Customer::create([
@@ -175,6 +195,10 @@ class BillingController extends Controller
             'name' => $user->name,
             'metadata' => ['user_id' => $user->id],
         ]);
+
+        // Persist immediately: without this an abandoned checkout leaves a
+        // stranded customer and creates a fresh one on the next attempt.
+        $user->forceFill(['stripe_customer_id' => $customer->id])->save();
 
         return $customer->id;
     }
@@ -191,6 +215,15 @@ class BillingController extends Controller
         $user = \App\Models\User::find($userId);
         if (!$user) {
             return;
+        }
+
+        // One-off payments and abandoned sessions arrive here without one.
+        if (!$session->subscription) {
+            return;
+        }
+
+        if ($session->customer && !$user->stripe_customer_id) {
+            $user->forceFill(['stripe_customer_id' => $session->customer])->save();
         }
 
         $stripeSubscription = StripeSubscription::retrieve($session->subscription);
