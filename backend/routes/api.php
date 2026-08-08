@@ -10,6 +10,13 @@ use Illuminate\Support\Facades\Route;
 Route::get('/auth/csrf', [AuthController::class, 'csrf'])
     ->name('auth.csrf');
 
+// Rendered inside an <iframe> on the frontend origin, where the session cookie
+// is not sent (SameSite=Lax). Authorised by a short-lived signature instead,
+// minted by the authenticated previewUrl endpoint below.
+Route::get('/resumes/{resume}/preview', [ResumeController::class, 'preview'])
+    ->middleware('signed')
+    ->name('resumes.preview');
+
 Route::get('/auth/google', [AuthController::class, 'redirect'])
     ->name('auth.google');
 
@@ -44,6 +51,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/resumes/{resume}/view', [ResumeController::class, 'viewPdf'])
         ->name('resumes.view');
+
+    Route::get('/resumes/{resume}/preview-url', [ResumeController::class, 'previewUrl'])
+        ->name('resumes.preview-url');
 
     Route::get('/resumes/{resume}/analyses', [AnalysisController::class, 'index'])
         ->name('analyses.index');

@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class ResumeApiTest extends TestCase
@@ -106,5 +107,64 @@ class ResumeApiTest extends TestCase
         $response = $this->getJson('/api/resumes');
 
         $response->assertUnauthorized();
+    }
+
+    public function test_preview_url_is_signed_and_scoped_to_the_owner(): void
+    {
+        $resume = Resume::factory()->create(['user_id' => $this->user->id]);
+
+        $response = $this->actingAs($this->user)
+            ->getJson("/api/resumes/{$resume->id}/preview-url");
+
+        $response->assertOk()->assertJsonStructure(['url', 'expires_in']);
+        $this->assertStringContainsString('signature=', $response->json('url'));
+    }
+
+    public function test_another_user_cannot_mint_a_preview_url(): void
+    {
+        $resume = Resume::factory()->create();
+
+        $this->actingAs($this->user)
+            ->getJson("/api/resumes/{$resume->id}/preview-url")
+            ->assertForbidden();
+    }
+
+    public function test_preview_rejects_an_unsigned_request(): void
+    {
+        $resume = Resume::factory()->create(['user_id' => $this->user->id]);
+
+        $this->get("/api/resumes/{$resume->id}/preview")->assertForbidden();
+    }
+
+    public function test_preview_rejects_a_tampered_signature(): void
+    {
+        $resume = Resume::factory()->create(['user_id' => $this->user->id]);
+
+        $url = URL::temporarySignedRoute('resumes.preview', now()->addMinutes(10), ['resume' => $resume->id]);
+
+        $this->get($url . 'x')->assertForbidden();
+    }
+
+    public function test_preview_rejects_an_expired_signature(): void
+    {
+        $resume = Resume::factory()->create(['user_id' => $this->user->id]);
+
+        $url = URL::temporarySignedRoute('resumes.preview', now()->addMinutes(10), ['resume' => $resume->id]);
+
+        $this->travel(11)->minutes();
+
+        $this->get($url)->assertForbidden();
+    }
+
+    public function test_download_returns_404_when_the_stored_file_is_missing(): void
+    {
+        $resume = Resume::factory()->create([
+            'user_id' => $this->user->id,
+            'storage_path' => 'resumes/does-not-exist.pdf',
+        ]);
+
+        $this->actingAs($this->user)
+            ->get("/api/resumes/{$resume->id}/download")
+            ->assertNotFound();
     }
 }

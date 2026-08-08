@@ -10,6 +10,7 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
 class ResumeController extends Controller
@@ -94,6 +95,47 @@ class ResumeController extends Controller
         }
 
         return response()->redirectTo($resume->getTemporaryUrl(300));
+    }
+
+    /**
+     * Mint a short-lived signed preview link for the current user's resume.
+     *
+     * The viewer runs in an iframe on the frontend origin, so the session
+     * cookie is not sent with the request. The signature carries the
+     * authorisation instead, and expires quickly.
+     */
+    public function previewUrl(Request $request, Resume $resume): JsonResponse
+    {
+        $this->authorize('view', $resume);
+
+        return response()->json([
+            'url' => URL::temporarySignedRoute(
+                'resumes.preview',
+                now()->addMinutes(10),
+                ['resume' => $resume->id]
+            ),
+            'expires_in' => 600,
+        ]);
+    }
+
+    /**
+     * Serve the file itself. Reached only with a valid signature, which is why
+     * this route sits outside the authenticated group.
+     */
+    public function preview(Request $request, Resume $resume)
+    {
+        $disk = $this->diskFor($resume);
+
+        if ($resume->disk !== 'local') {
+            return response()->redirectTo($resume->getTemporaryUrl(300));
+        }
+
+        return $disk->response($resume->storage_path, $resume->original_filename, [
+            'Content-Type' => $resume->mime_type,
+            'Content-Disposition' => 'inline; filename="' . $resume->original_filename . '"',
+            // The link is signed and short-lived; do not let caches keep a copy.
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
     /**

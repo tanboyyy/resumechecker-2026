@@ -74,7 +74,10 @@
             </div>
 
             <div v-if="isPdf" class="h-[32rem] bg-surface-muted sm:h-[42rem]">
-              <iframe :src="pdfViewUrl" class="h-full w-full border-0" title="Resume preview" />
+              <iframe v-if="previewUrl" :src="previewUrl" class="h-full w-full border-0" title="Resume preview" />
+              <div v-else class="grid h-full place-items-center">
+                <Spinner size="1.5rem" class="text-content-subtle" label="Loading preview" />
+              </div>
             </div>
             <EmptyState
               v-else
@@ -210,10 +213,12 @@ import { useToastStore } from '@/stores/toast'
 import { confirm } from '@/composables/useConfirm'
 import { messageFor } from '@/services/errors'
 import { formatDate, formatRelative } from '@/services/format'
+import api from '@/services/api'
 import type { Resume } from '@/types'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
+import Spinner from '@/components/ui/Spinner.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import ExtractionBadge from '@/components/resume/ExtractionBadge.vue'
 import ScoreChip from '@/components/analysis/ScoreChip.vue'
@@ -233,10 +238,21 @@ const showText = ref(false)
 const analyses = computed(() => analysisStore.analyses)
 const isPdf = computed(() => !!resume.value?.mime_type?.includes('pdf'))
 
-const pdfViewUrl = computed(() => {
-  const base = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
-  return `${base}/resumes/${resumeId}/view`
-})
+/**
+ * The iframe lives on a different origin from the API, so the session cookie
+ * is not sent with its request. A short-lived signed URL carries the
+ * authorisation instead.
+ */
+const previewUrl = ref('')
+
+async function loadPreviewUrl() {
+  try {
+    const { data } = await api.get(`/resumes/${resumeId}/preview-url`)
+    previewUrl.value = data.url
+  } catch {
+    previewUrl.value = ''
+  }
+}
 
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
@@ -245,6 +261,8 @@ onMounted(async () => {
     resume.value = await resumeStore.getResume(resumeId)
     await loadAnalyses()
     startPollingIfNeeded()
+
+    if (isPdf.value) loadPreviewUrl()
   } catch (e) {
     if (!resume.value) toast.error(await messageFor(e))
   } finally {
