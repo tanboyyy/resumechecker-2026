@@ -9,27 +9,20 @@
         The link may be out of date, or the resume or analysis it pointed to may have been deleted.
       </p>
       <div class="mt-8 flex flex-wrap justify-center gap-3">
-        <RouterLink
-          :to="auth.user ? '/dashboard' : '/'"
-          class="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-on-brand transition hover:bg-brand-hover"
-        >
+        <Button tag="router-link" :to="auth.user ? '/dashboard' : '/'">
           {{ auth.user ? 'Back to dashboard' : 'Back to home' }}
-        </RouterLink>
-        <RouterLink
-          v-if="auth.user"
-          to="/resumes"
-          class="rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-content transition hover:bg-surface-muted"
-        >
+        </Button>
+        <Button v-if="auth.user" tag="router-link" to="/resumes" variant="secondary">
           View resumes
-        </RouterLink>
+        </Button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import Button from '@/components/ui/Button.vue'
 
 const auth = useAuthStore()
 </script>

@@ -7,19 +7,14 @@
       :description="resume ? `${resume.original_filename} · ${resume.size_human}` : undefined"
     >
       <template #actions>
-        <button
-          class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-content transition hover:bg-surface-muted"
-          @click="handleDownload"
-        >
-          Download
-        </button>
-        <RouterLink
+        <Button variant="secondary" @click="handleDownload">Download</Button>
+        <Button
           v-if="resume?.extraction_status === 'completed'"
+          tag="router-link"
           :to="{ name: 'analyze', params: { id: resumeId } }"
-          class="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition hover:bg-brand-hover"
         >
           Run analysis
-        </RouterLink>
+        </Button>
       </template>
     </PageHeader>
 
@@ -37,9 +32,7 @@
       title="We couldn't load this resume"
       description="It may have been deleted, or the link may be wrong."
     >
-      <RouterLink to="/resumes" class="rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-on-brand transition hover:bg-brand-hover">
-        Back to resumes
-      </RouterLink>
+      <Button tag="router-link" to="/resumes">Back to resumes</Button>
     </EmptyState>
 
     <template v-else>
@@ -192,12 +185,7 @@
             </dl>
           </section>
 
-          <button
-            class="w-full rounded-xl border border-critical-border px-4 py-2.5 text-sm font-medium text-critical transition hover:bg-critical-soft"
-            @click="handleDelete"
-          >
-            Delete resume
-          </button>
+          <Button variant="destructive" class="w-full" @click="handleDelete">Delete resume</Button>
         </aside>
       </div>
     </template>
@@ -220,6 +208,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Spinner from '@/components/ui/Spinner.vue'
 import Pagination from '@/components/ui/Pagination.vue'
+import Button from '@/components/ui/Button.vue'
 import ExtractionBadge from '@/components/resume/ExtractionBadge.vue'
 import ScoreChip from '@/components/analysis/ScoreChip.vue'
 import StatusPill from '@/components/analysis/StatusPill.vue'

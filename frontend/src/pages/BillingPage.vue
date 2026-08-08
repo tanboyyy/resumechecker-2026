@@ -95,14 +95,15 @@
             </li>
           </ul>
 
-          <button
+          <Button
             v-if="plan.purchasable && !isCurrent(plan.id)"
-            class="mt-5 w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-on-brand transition hover:bg-brand-hover disabled:opacity-50"
+            class="mt-5 w-full"
             :disabled="pendingPlan !== null"
+            :loading="pendingPlan === plan.id"
             @click="handleUpgrade(plan.id)"
           >
             {{ pendingPlan === plan.id ? 'Starting checkout…' : upgradeLabel }}
-          </button>
+          </Button>
           <p
             v-else-if="plan.id !== 'free' && !isCurrent(plan.id)"
             class="mt-5 rounded-lg bg-surface-muted px-4 py-2.5 text-center text-sm text-content-muted"
@@ -122,6 +123,7 @@ import { useToastStore } from '@/stores/toast'
 import { messageFor } from '@/services/errors'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
+import Button from '@/components/ui/Button.vue'
 
 const billing = useBillingStore()
 const toast = useToastStore()

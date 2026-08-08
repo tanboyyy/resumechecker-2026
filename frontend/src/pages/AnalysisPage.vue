@@ -7,15 +7,14 @@
       back-label="Back to resume"
     >
       <template #actions>
-        <button
+        <Button
           v-if="analysis?.status === 'completed'"
-          class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-content transition hover:bg-surface-muted disabled:opacity-50"
-          :disabled="exporting"
+          variant="secondary"
+          :loading="exporting"
           @click="handleExport"
         >
-          <Spinner v-if="exporting" size="0.85rem" />
           {{ exporting ? 'Preparing…' : 'Export PDF' }}
-        </button>
+        </Button>
       </template>
     </PageHeader>
 
@@ -56,12 +55,9 @@
             {{ analysis.error_message ?? 'Something went wrong. Please try again.' }}
           </p>
           <p class="mt-1 text-sm text-content-muted">This didn't count against your monthly allowance.</p>
-          <RouterLink
-            :to="{ name: 'analyze', params: { id: resumeId } }"
-            class="mt-3 inline-block rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition hover:bg-brand-hover"
-          >
+          <Button tag="router-link" :to="{ name: 'analyze', params: { id: resumeId } }" class="mt-3">
             Try again
-          </RouterLink>
+          </Button>
         </div>
       </div>
     </section>
@@ -184,6 +180,7 @@ import { messageFor, upgradeActionFor } from '@/services/errors'
 import { formatDateTime, formatRelative } from '@/services/format'
 import api from '@/services/api'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import Button from '@/components/ui/Button.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Spinner from '@/components/ui/Spinner.vue'

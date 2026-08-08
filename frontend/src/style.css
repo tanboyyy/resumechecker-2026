@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Self-hosted, not linked from a CDN — no extra DNS/TLS round trip before
+   first paint, and the app renders correctly with no network at all. */
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/bricolage-grotesque";
+
 /*
   Theme is driven by a data-theme attribute set on <html> before paint, so the
   user's explicit choice always beats the OS and there is no flash on load.
@@ -21,12 +26,20 @@
   --content-muted: #586072;
   --content-subtle: #848ca0;
 
-  /* Brand. Kept close to the existing indigo so the product stays recognisable. */
+  /* Brand: indigo through violet into blue. Two hops, not one flat blend, so
+     it reads as considered rather than a default two-stop CSS gradient. */
   --brand: #4f46e5;
   --brand-hover: #4338ca;
   --brand-soft: #eef0ff;
   --brand-border: #c9cbfa;
   --on-brand: #ffffff;
+  --brand-2: #7c3aed;
+  --brand-3: #2563eb;
+
+  /* A warm counterpoint, reserved for small sparks — a badge glow, an
+     accent dot — never a gradient stop. Keeps the brand gradient from being
+     the only color decision in the room. */
+  --spark: #f59e0b;
 
   /* Semantic. Separate from the brand hue so severity never reads as chrome. */
   --critical: #cf2c20;
@@ -50,6 +63,16 @@
   --shadow-card: 0 1px 2px rgb(16 19 27 / 0.04), 0 1px 3px rgb(16 19 27 / 0.06);
   --shadow-raised: 0 4px 12px rgb(16 19 27 / 0.08), 0 2px 4px rgb(16 19 27 / 0.04);
   --shadow-overlay: 0 16px 48px rgb(16 19 27 / 0.18);
+  --shadow-glow: 0 8px 30px -8px rgb(79 70 229 / 0.45);
+
+  --gradient-brand: linear-gradient(115deg, var(--brand) 0%, var(--brand-2) 55%, var(--brand-3) 100%);
+  --gradient-brand-soft: linear-gradient(115deg, color-mix(in oklab, var(--brand) 12%, transparent) 0%, color-mix(in oklab, var(--brand-2) 10%, transparent) 55%, color-mix(in oklab, var(--brand-3) 12%, transparent) 100%);
+
+  /* Hero mesh stops. Named separately from --brand-* so the gradient can be
+     restyled without touching solid UI color, and vice versa. */
+  --aurora-1: #6366f1;
+  --aurora-2: #a78bfa;
+  --aurora-3: #38bdf8;
 }
 
 [data-theme="dark"] {
@@ -70,6 +93,10 @@
   --brand-soft: #1c1b3a;
   --brand-border: #35337a;
   --on-brand: #0b0d12;
+  --brand-2: #a78bfa;
+  --brand-3: #60a5fa;
+
+  --spark: #fbbf24;
 
   --critical: #f9776d;
   --critical-soft: #2e1210;
@@ -92,10 +119,21 @@
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow-raised: 0 4px 14px rgb(0 0 0 / 0.5);
   --shadow-overlay: 0 16px 48px rgb(0 0 0 / 0.65);
+  --shadow-glow: 0 8px 36px -6px rgb(130 128 247 / 0.5);
+
+  --gradient-brand: linear-gradient(115deg, var(--brand) 0%, var(--brand-2) 55%, var(--brand-3) 100%);
+  --gradient-brand-soft: linear-gradient(115deg, color-mix(in oklab, var(--brand) 18%, transparent) 0%, color-mix(in oklab, var(--brand-2) 15%, transparent) 55%, color-mix(in oklab, var(--brand-3) 18%, transparent) 100%);
+
+  --aurora-1: #6366f1;
+  --aurora-2: #c084fc;
+  --aurora-3: #22d3ee;
 }
 
 /* Expose the tokens as utilities: bg-surface, text-content-muted, border-border… */
 @theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
   --color-surface-muted: var(--surface-muted);
@@ -113,6 +151,9 @@
   --color-brand-soft: var(--brand-soft);
   --color-brand-border: var(--brand-border);
   --color-on-brand: var(--on-brand);
+  --color-brand-2: var(--brand-2);
+  --color-brand-3: var(--brand-3);
+  --color-spark: var(--spark);
 
   --color-critical: var(--critical);
   --color-critical-soft: var(--critical-soft);
@@ -133,6 +174,7 @@
   --shadow-card: var(--shadow-card);
   --shadow-raised: var(--shadow-raised);
   --shadow-overlay: var(--shadow-overlay);
+  --shadow-glow: var(--shadow-glow);
 }
 
 @layer base {
@@ -144,8 +186,7 @@
   body {
     background-color: var(--canvas);
     color: var(--content);
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-      "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
@@ -157,9 +198,16 @@
     border-radius: 4px;
   }
 
-  /* Headings should not leave a single trailing word on its own line. */
+  /* Headings should not leave a single trailing word on its own line.
+     Bricolage Grotesque carries an optical-size axis: at small card-header
+     sizes it renders as a clean grotesk, and only gets its expressive,
+     inky character at hero sizes — font-optical-sizing drives that off the
+     actual rendered size, so one rule works everywhere. */
   h1, h2, h3 {
     text-wrap: balance;
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    letter-spacing: -0.015em;
   }
 
   /* Digits that sit in columns should line up. */
@@ -170,6 +218,38 @@
   ::selection {
     background-color: var(--brand-soft);
     color: var(--content);
+  }
+}
+
+@layer components {
+  /* The one gradient the product is allowed to have. Used on a handful of
+     words per page, never a whole paragraph. */
+  .text-gradient-brand {
+    background-image: var(--gradient-brand);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  .bg-gradient-brand {
+    background-image: var(--gradient-brand);
+  }
+
+  /* Slow, cheap, GPU-composited drift — three radial gradients moving their
+     position over a minute. No JS, no layout work, killed entirely by the
+     reduced-motion rule below. */
+  .aurora {
+    background-image:
+      radial-gradient(38% 45% at 18% 22%, color-mix(in oklab, var(--aurora-1) 55%, transparent) 0%, transparent 70%),
+      radial-gradient(42% 50% at 82% 15%, color-mix(in oklab, var(--aurora-2) 48%, transparent) 0%, transparent 72%),
+      radial-gradient(46% 55% at 50% 92%, color-mix(in oklab, var(--aurora-3) 42%, transparent) 0%, transparent 72%);
+    animation: aurora-drift 40s ease-in-out infinite alternate;
+    will-change: background-position;
+  }
+
+  @keyframes aurora-drift {
+    0% { background-position: 0% 0%, 0% 0%, 0% 0%; }
+    100% { background-position: 6% 4%, -5% 6%, 4% -5%; }
   }
 }
 

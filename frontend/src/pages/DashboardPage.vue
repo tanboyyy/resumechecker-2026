@@ -5,12 +5,7 @@
       :description="greeting"
     >
       <template #actions>
-        <RouterLink
-          to="/resumes"
-          class="rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-on-brand transition hover:bg-brand-hover"
-        >
-          Upload a resume
-        </RouterLink>
+        <Button tag="router-link" to="/resumes">Upload a resume</Button>
       </template>
     </PageHeader>
 
@@ -44,12 +39,7 @@
           <p class="mt-0.5 text-sm text-content-muted">Upgrade for more, or wait until your allowance resets.</p>
         </div>
       </div>
-      <RouterLink
-        to="/billing"
-        class="shrink-0 rounded-lg bg-brand px-4 py-2 text-center text-sm font-semibold text-on-brand transition hover:bg-brand-hover"
-      >
-        See plans
-      </RouterLink>
+      <Button tag="router-link" to="/billing" class="shrink-0">See plans</Button>
     </div>
 
     <!-- Recent resumes -->
@@ -80,12 +70,7 @@
         title="No resumes yet"
         description="Upload a PDF or DOCX and we'll check it against applicant tracking systems."
       >
-        <RouterLink
-          to="/resumes"
-          class="rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-on-brand transition hover:bg-brand-hover"
-        >
-          Upload your first resume
-        </RouterLink>
+        <Button tag="router-link" to="/resumes">Upload your first resume</Button>
       </EmptyState>
 
       <ul v-else class="divide-y divide-border">
@@ -127,6 +112,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import ExtractionBadge from '@/components/resume/ExtractionBadge.vue'
+import Button from '@/components/ui/Button.vue'
 
 const route = useRoute()
 const auth = useAuthStore()

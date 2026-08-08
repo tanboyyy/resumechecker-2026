@@ -78,20 +78,12 @@
     </div>
 
     <div class="flex justify-end gap-3">
-      <RouterLink
-        :to="{ name: 'resume', params: { id: resumeId } }"
-        class="rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-content transition hover:bg-surface-muted"
-      >
+      <Button tag="router-link" :to="{ name: 'resume', params: { id: resumeId } }" variant="secondary">
         Cancel
-      </RouterLink>
-      <button
-        class="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-on-brand transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
-        :disabled="!canSubmit"
-        @click="handleAnalyze"
-      >
-        <Spinner v-if="analysisStore.creating" size="0.9rem" />
+      </Button>
+      <Button :disabled="!canSubmit" :loading="analysisStore.creating" @click="handleAnalyze">
         {{ analysisStore.creating ? 'Starting…' : 'Run analysis' }}
-      </button>
+      </Button>
     </div>
   </div>
 </template>
@@ -104,7 +96,7 @@ import { useBillingStore } from '@/stores/billing'
 import { messageFor, upgradeActionFor } from '@/services/errors'
 import type { Toast } from '@/stores/toast'
 import PageHeader from '@/components/ui/PageHeader.vue'
-import Spinner from '@/components/ui/Spinner.vue'
+import Button from '@/components/ui/Button.vue'
 
 const route = useRoute()
 const router = useRouter()
