@@ -43,7 +43,7 @@ class CreateAnalysisRequest extends FormRequest
     {
         return [
             'type.required' => 'Please select an analysis type.',
-            'type.in' => 'The analysis type must be general, comparison, rewrite, or interview.',
+            'type.in' => 'Choose one of: ATS check, content review, formatting check, or job comparison.',
             'job_description.required' => 'A job description is required for comparison analysis.',
             'job_description.min' => 'The job description must be at least 50 characters.',
             'job_description.max' => 'The job description must not exceed 10,000 characters.',

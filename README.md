@@ -1,175 +1,162 @@
 # ResumeAI
 
-ResumeAI is an AI-powered resume analysis platform that helps users evaluate and improve their resumes through automated feedback and scoring.
+An AI-powered resume analysis platform. Upload a resume, run an analysis, and
+get a score plus prioritised, specific feedback.
 
-Built with Laravel 12, Vue 3, PostgreSQL, Redis, Docker, and OpenAI.
-
----
-
-## Overview
-
-ResumeAI allows users to:
-
-- Sign in using Google OAuth
-- Upload and manage resumes
-- Generate AI-powered resume analyses
-- View resume scores and recommendations
-- Track previous analyses over time
+Laravel API, Vue 3 client, any OpenAI-compatible model provider.
 
 ---
 
-## Tech Stack
+## What it does
 
-| Frontend | Backend | Database | AI | Infrastructure |
-|-----------|-----------|-----------|-----------|----------------|
-| Vue 3, TypeScript, Vite, Tailwind CSS | Laravel 12, PHP 8.4 | PostgreSQL 16, Redis 7 | OpenAI GPT-4o | Docker, Nginx, AWS S3 |
+- Sign in with Google
+- Upload a PDF or DOCX; the text is extracted in the background
+- Run one of four analyses:
+  - **ATS check** — how well tracking systems can parse and rank the resume
+  - **Content review** — whether bullet points show impact
+  - **Formatting check** — structure, spacing, headings, date consistency
+  - **Job comparison** — match against a specific posting, with keyword gaps
+- Read a score, severity-ranked fixes, strengths, weaknesses and next steps
+- Export a PDF report (paid plans)
+- Track past analyses per resume
 
 ---
 
-## Getting Started
+## Requirements
 
-### Prerequisites
-
-Before running the project, make sure you have:
-
-- Docker Desktop
-- An OpenAI API key
+- PHP 8.3+ and Composer
+- Node 20+
+- An OpenAI-compatible API key
 - Google OAuth credentials
+- Optionally Docker, and Stripe keys if you want paid plans
 
-### Installation
+---
 
-Clone the repository.
+## Getting started
 
 ```bash
 git clone <repository-url>
 cd ResumeAI
 ```
 
-Copy the backend environment file.
-
-```bash
-cp backend/.env.example backend/.env
-```
-
-Configure the following values in `backend/.env`:
-
-- `OPENAI_API_KEY`
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-
-If you're using AWS S3 locally, configure your AWS credentials as well.
-
-Start the application.
-
-```bash
-docker compose up -d
-```
-
-Run the database migrations.
-
-```bash
-docker compose exec app php artisan migrate
-```
-
-The application will now be available.
-
-| Service | URL |
-|---------|-----|
-| Frontend | http://localhost:5173 |
-| Backend API | http://localhost:8000 |
-| Mailpit | http://localhost:8025 |
-
----
-
-## Development
-
-### Docker
-
-```bash
-# Start services
-docker compose up -d
-
-# View logs
-docker compose logs -f
-
-# Run migrations
-docker compose exec app php artisan migrate
-
-# Run queue worker
-docker compose exec queue php artisan queue:work
-```
-
-### Local Development
-
-Backend
+### Backend
 
 ```bash
 cd backend
-
 composer install
+cp .env.example .env
 php artisan key:generate
+```
+
+Fill in at minimum, in `backend/.env`:
+
+| Variable | Why |
+|---|---|
+| `OPENAI_API_KEY` | Runs the analyses |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Sign-in |
+| `FRONTEND_URL` | OAuth redirect, CORS allow-list, Stripe return URLs |
+
+`.env.example` documents every variable, including the optional Stripe and S3
+settings. Then:
+
+```bash
 php artisan migrate
 php artisan serve
 ```
 
-Frontend
+### Queue worker — required
+
+Text extraction and analysis run as queued jobs. **Nothing will finish without
+a worker running**: uploads stay on "Reading…" and analyses stay on "Queued".
+
+```bash
+cd backend
+php artisan queue:work
+```
+
+Leave it running in its own terminal alongside `php artisan serve`.
+
+> Do not set `QUEUE_CONNECTION=sync` to avoid this. That puts a model call of
+> up to two minutes inside the web request and exhausts the worker pool under
+> any real traffic.
+
+### Frontend
 
 ```bash
 cd frontend
-
 npm install
+cp .env.example .env      # only if your API is not on localhost:8000
 npm run dev
 ```
 
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| API | http://localhost:8000 |
+
 ---
 
-## Project Structure
+## Docker
 
-```
-ResumeAI
-├── backend/           Laravel API
-├── frontend/          Vue application
-├── docker/            Docker configuration
-└── docker-compose.yml
+```bash
+docker compose up -d
+docker compose exec app php artisan migrate
+docker compose logs -f
 ```
 
-The backend contains the Laravel application, API, business logic, jobs, and database migrations. The frontend contains the Vue application, components, pages, stores, and services.
+The compose file provides PostgreSQL and Redis; point `DB_CONNECTION=pgsql`
+and the Redis variables at them, and run the queue worker service.
 
 ---
 
 ## Testing
 
-Backend
-
 ```bash
-cd backend
-php artisan test
-```
-
-Frontend
-
-```bash
-cd frontend
-npm run test
+cd backend && php artisan test
+cd frontend && npx vue-tsc --noEmit && npm run build
 ```
 
 ---
 
-## Environment
+## Checking the model provider
 
-The project requires the following environment variables:
+```bash
+cd backend
+php artisan ai:status
+```
 
-| Variable | Purpose |
-|----------|----------|
-| `OPENAI_API_KEY` | AI resume analysis |
-| `GOOGLE_CLIENT_ID` | Google authentication |
-| `GOOGLE_CLIENT_SECRET` | Google authentication |
-| `DB_*` | PostgreSQL connection |
-| `REDIS_*` | Queue and cache |
-| `AWS_*` | Optional S3 storage |
+Reports the endpoint, model, whether the key works, and remaining rate limit.
+
+---
+
+## Deploying
+
+Before going live:
+
+- `APP_DEBUG=false` — debug mode returns stack traces and config values to the client
+- `APP_ENV=production`, and a generated `APP_KEY`
+- `SESSION_SECURE_COOKIE=true` behind HTTPS
+- `SESSION_DRIVER` and `CACHE_STORE` on `database` or `redis`, never `file`,
+  so sessions are shared across app servers
+- `SANCTUM_STATEFUL_DOMAINS` and `FRONTEND_URL` set to the real frontend origin
+- A supervised queue worker (`php artisan queue:work --tries=3`)
+- A Stripe webhook pointed at `POST /api/billing/webhook`, with the signing
+  secret in `STRIPE_WEBHOOK_SECRET`
+
+---
+
+## Project structure
+
+```
+ResumeAI
+├── backend/     Laravel API — controllers, jobs, services, migrations
+├── frontend/    Vue app — pages, layout, components, stores
+├── docker/      Docker configuration
+└── docker-compose.yml
+```
 
 ---
 
 ## License
 
-This project is licensed under the MIT License.
+MIT

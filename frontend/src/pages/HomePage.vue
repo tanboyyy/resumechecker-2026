@@ -98,7 +98,7 @@
       <div class="max-w-7xl mx-auto">
         <div class="text-center mb-16">
           <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Everything you need to get hired</h2>
-          <p class="text-lg text-gray-600 max-w-2xl mx-auto">Four analysis types powered by GPT-4o, designed to catch what hiring managers and ATS systems look for.</p>
+          <p class="text-lg text-gray-600 max-w-2xl mx-auto">Four analysis types, designed to catch what hiring managers and applicant tracking systems look for.</p>
         </div>
         <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div v-for="feature in features" :key="feature.title" class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition">
@@ -140,7 +140,7 @@
           <h2 class="text-3xl font-bold text-gray-900 mb-6">Why I built this</h2>
           <div class="space-y-4 text-gray-600 leading-relaxed">
             <p>
-              I built ResumeAI as a student project to practice working with AI tools in a real-world context. I wanted to understand how large language models like GPT-4o could be applied to solve a problem that actually matters.
+              I built ResumeAI as a student project to practice working with AI tools in a real-world context. I wanted to understand how large language models could be applied to a problem that actually matters.
             </p>
             <p>
               The problem I picked: <strong class="text-gray-900">resume optimization</strong>. Every semester, my peers and I stress over whether our resumes will pass automated screening systems. Most of us never get human eyes on our applications — a machine decides first.
@@ -269,11 +269,7 @@ const techStack = [
   'Vue 3',
   'TypeScript',
   'Tailwind CSS',
-  'OpenAI GPT-4o',
-  'PostgreSQL',
-  'Redis',
-  'Stripe',
+  'Queued jobs',
   'Docker',
-  'Sanctum',
 ]
 </script>

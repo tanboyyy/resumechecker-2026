@@ -96,13 +96,19 @@
           </ul>
 
           <button
-            v-if="plan.id !== 'free' && !isCurrent(plan.id)"
+            v-if="plan.purchasable && !isCurrent(plan.id)"
             class="mt-5 w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-on-brand transition hover:bg-brand-hover disabled:opacity-50"
             :disabled="pendingPlan !== null"
             @click="handleUpgrade(plan.id)"
           >
             {{ pendingPlan === plan.id ? 'Starting checkout…' : upgradeLabel }}
           </button>
+          <p
+            v-else-if="plan.id !== 'free' && !isCurrent(plan.id)"
+            class="mt-5 rounded-lg bg-surface-muted px-4 py-2.5 text-center text-sm text-content-muted"
+          >
+            Not available yet
+          </p>
         </div>
       </div>
     </section>

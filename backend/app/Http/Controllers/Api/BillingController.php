@@ -37,6 +37,10 @@ class BillingController extends Controller
                 'price' => $plan['price'],
                 'price_display' => $plan['price'] === 0 ? 'Free' : '$' . number_format($plan['price'] / 100, 2) . '/mo',
                 'features' => $plan['features'],
+                // Never show a buy button for something that cannot be bought.
+                'purchasable' => $plan['price'] > 0
+                    && $this->billingConfigured()
+                    && !empty($plan['stripe_price_id']),
             ])->values(),
         ]);
     }

@@ -3,7 +3,6 @@
 use App\Http\Controllers\Api\AnalysisController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BillingController;
-use App\Http\Controllers\Api\GeminiController;
 use App\Http\Controllers\Api\ResumeController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,9 +28,6 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/auth/logout', [AuthController::class, 'logout'])
         ->name('auth.logout');
-
-    Route::get('/gemini/status', [GeminiController::class, 'status'])
-        ->name('gemini.status');
 
     Route::get('/resumes', [ResumeController::class, 'index'])
         ->name('resumes.index');
