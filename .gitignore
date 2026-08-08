@@ -1,0 +1,7 @@
+# Preserved history of the Laravel skeleton clone that backend/ used to be.
+# Kept on disk for reference; not part of this repository.
+backend/.git.disabled-laravel-skeleton/
+
+node_modules/
+.DS_Store
+Thumbs.db
