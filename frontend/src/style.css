@@ -4,6 +4,7 @@
    first paint, and the app renders correctly with no network at all. */
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource/space-mono/latin-400.css";
 
 /*
   Theme is driven by a data-theme attribute set on <html> before paint, so the
@@ -112,6 +113,9 @@
 @theme inline {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-display: "Bricolage Grotesque Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Editorial/technical accent: nav brackets, eyebrow labels, small captions.
+     Used for texture and rhythm, never for body copy. */
+  --font-mono: "Space Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);

@@ -1,53 +1,62 @@
 <template>
   <div class="min-h-screen bg-canvas">
-    <!-- Nav -->
-    <nav class="fixed top-0 z-50 w-full border-b-2 border-content bg-canvas">
-      <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center gap-2.5">
-          <span class="grid h-8 w-8 place-items-center rounded-md border-2 border-content bg-brand text-on-brand">
-            <svg class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
-            </svg>
-          </span>
-          <span class="font-display text-lg font-semibold tracking-tight text-content">ResumeAI</span>
-        </div>
-
-        <div class="flex items-center gap-1 sm:gap-2">
-          <a href="#features" class="hidden rounded-md px-3 py-2 text-sm font-medium text-content-muted transition hover:text-content sm:inline-block">
-            Features
-          </a>
-          <a href="#how-it-works" class="hidden rounded-md px-3 py-2 text-sm font-medium text-content-muted transition hover:text-content sm:inline-block">
-            How it works
-          </a>
-          <Button v-if="auth.user" tag="router-link" to="/dashboard" size="sm">Dashboard</Button>
-          <Button v-else tag="router-link" to="/login" size="sm">Get started</Button>
-        </div>
-      </div>
-    </nav>
-
-    <!-- Hero -->
-    <section class="relative overflow-hidden pt-36 pb-20 sm:pt-44 sm:pb-28">
-      <div class="relative mx-auto grid max-w-6xl gap-16 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:px-8">
-        <div class="motion-safe:animate-[rise_0.6s_ease-out_backwards]">
-          <div class="inline-flex items-center gap-2 rounded-full border-2 border-content bg-surface px-3.5 py-1.5 text-xs font-medium text-content">
-            <span class="h-1.5 w-1.5 rounded-full bg-brand" aria-hidden="true" />
-            Built for job seekers, not recruiters
+    <!-- Nav + hero: pinned to the dark palette regardless of the site theme —
+         a deliberate brand moment, not a light/dark toggle state. Everything
+         inside reads its color from the cascaded dark tokens automatically. -->
+    <div data-theme="dark">
+      <nav class="fixed top-0 z-50 w-full border-b border-border bg-canvas">
+        <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div class="flex items-center gap-2.5">
+            <span class="grid h-8 w-8 place-items-center rounded-md border-2 border-content bg-brand text-on-brand">
+              <svg class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
+              </svg>
+            </span>
+            <span class="font-display text-sm font-medium uppercase tracking-[0.2em] text-content">ResumeAI</span>
           </div>
 
-          <h1 class="mt-6 text-5xl font-semibold leading-[1.05] tracking-tight text-content sm:text-6xl lg:text-[4.25rem]">
-            Beat the ATS.
-            <br />
-            <span class="underline decoration-brand decoration-[7px] underline-offset-[12px]">
-              Land the interview.
-            </span>
-          </h1>
+          <div class="flex items-center gap-1 sm:gap-5">
+            <a href="#features" class="hidden font-mono text-xs uppercase tracking-wider text-content-muted transition hover:text-content sm:inline-block">
+              [Features]
+            </a>
+            <a href="#how-it-works" class="hidden font-mono text-xs uppercase tracking-wider text-content-muted transition hover:text-content sm:inline-block">
+              [Process]
+            </a>
+            <Button v-if="auth.user" tag="router-link" to="/dashboard" size="sm">Dashboard</Button>
+            <Button v-else tag="router-link" to="/login" size="sm">Get started</Button>
+          </div>
+        </div>
+      </nav>
 
-          <p class="mt-8 max-w-xl text-lg leading-relaxed text-content-muted">
-            Upload your resume and get a score, a prioritised fix list, and the exact
-            keywords a hiring pipeline is scanning for — before you hit apply.
-          </p>
+      <section class="bg-canvas pt-32 pb-20 sm:pt-40">
+        <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div class="grid gap-10 lg:grid-cols-[1.3fr_0.7fr] lg:items-start">
+            <div class="motion-safe:animate-[rise_0.6s_ease-out_backwards]">
+              <p class="font-mono text-xs uppercase tracking-wider text-content-muted">
+                [ For job seekers, not recruiters ]
+              </p>
+              <h1 class="mt-5 text-5xl font-semibold leading-[1.05] tracking-tight text-content sm:text-6xl lg:text-[4.5rem]">
+                Beat the ATS.
+                <br />
+                Land the interview.
+              </h1>
+            </div>
 
-          <div class="mt-9 flex flex-col gap-3 sm:flex-row">
+            <div class="motion-safe:animate-[rise_0.6s_ease-out_0.1s_backwards] lg:pt-3">
+              <p class="max-w-xs font-mono text-xs uppercase leading-relaxed tracking-wide text-content-muted">
+                ResumeAI reads your resume the way an applicant tracking system
+                does, and tells you what to fix before you hit apply.
+              </p>
+              <dl class="mt-6 flex gap-6 font-mono text-xs uppercase tracking-wide text-content-subtle">
+                <div v-for="stat in stats" :key="stat.label">
+                  <dt>{{ stat.label }}</dt>
+                  <dd class="mt-1 text-content">{{ stat.value }}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <div class="mt-10 flex flex-col gap-3 motion-safe:animate-[rise_0.6s_ease-out_0.15s_backwards] sm:flex-row">
             <Button tag="router-link" :to="auth.user ? '/dashboard' : '/login'" size="lg">
               Analyse my resume
               <template #icon>
@@ -60,51 +69,70 @@
               See how it works
             </Button>
           </div>
-
-          <dl class="mt-12 grid max-w-md grid-cols-3 gap-6 border-t-2 border-content pt-6">
-            <div v-for="stat in stats" :key="stat.label">
-              <dt class="text-xs text-content-subtle">{{ stat.label }}</dt>
-              <dd class="mt-1 font-display text-xl font-semibold text-content">{{ stat.value }}</dd>
-            </div>
-          </dl>
         </div>
 
-        <!-- Product preview: the real ScoreGauge and feedback UI, not a mockup -->
-        <div class="motion-safe:animate-[rise_0.7s_ease-out_0.1s_backwards] lg:justify-self-end">
-          <div class="w-full max-w-sm rounded-xl border-2 border-content bg-surface p-5 shadow-bold sm:p-6">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2 text-sm font-medium text-content">
-                <svg class="h-4 w-4 text-content-subtle" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
-                </svg>
-                resume.pdf
+        <!-- The visual moment: a giant ghost wordmark for texture, the real
+             product preview over it, and the four analysis types as a
+             corner tag list. No stock photography — the product itself is
+             the image. -->
+        <div class="relative mt-16 overflow-hidden border-y border-border bg-surface-muted/40">
+          <p
+            aria-hidden="true"
+            class="pointer-events-none select-none whitespace-nowrap py-6 text-center font-display text-[5.5rem] font-bold leading-none tracking-tight text-transparent sm:text-[9rem] lg:text-[11rem]"
+            style="-webkit-text-stroke: 1px var(--border-strong)"
+          >
+            RESUMEAI
+          </p>
+
+          <div class="relative mx-auto grid max-w-6xl gap-8 px-4 pb-12 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-end lg:px-8">
+            <dl class="grid grid-cols-2 gap-x-8 gap-y-4 font-mono text-xs uppercase tracking-wide text-content-subtle sm:max-w-sm">
+              <div>
+                <dt class="text-content-muted">Analyse</dt>
+                <dd class="mt-1 text-content">ATS Check<br />Content Review</dd>
               </div>
-              <span class="rounded-full border border-success-border bg-success-soft px-2 py-0.5 text-xs font-medium text-success">
-                Complete
-              </span>
-            </div>
+              <div>
+                <dt class="text-content-muted">Compare</dt>
+                <dd class="mt-1 text-content">Formatting<br />Job Comparison</dd>
+              </div>
+            </dl>
 
-            <div class="mt-5 flex justify-center">
-              <ScoreGauge :score="78" :size="140" :stroke-width="10" label="ATS score" />
-            </div>
+            <div class="w-full max-w-sm justify-self-end">
+              <div class="rounded-xl border-2 border-content bg-surface p-5 shadow-bold sm:p-6">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2 text-sm font-medium text-content">
+                    <svg class="h-4 w-4 text-content-subtle" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
+                    </svg>
+                    resume.pdf
+                  </div>
+                  <span class="rounded-full border border-success-border bg-success-soft px-2 py-0.5 text-xs font-medium text-success">
+                    Complete
+                  </span>
+                </div>
 
-            <ul class="mt-5 space-y-2 border-t border-border pt-4">
-              <li v-for="row in previewFindings" :key="row.text" class="flex items-start gap-2.5 text-sm">
-                <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full" :class="row.dot" aria-hidden="true" />
-                <span class="text-content-muted">{{ row.text }}</span>
-              </li>
-            </ul>
+                <div class="mt-5 flex justify-center">
+                  <ScoreGauge :score="78" :size="140" :stroke-width="10" label="ATS score" />
+                </div>
+
+                <ul class="mt-5 space-y-2 border-t border-border pt-4">
+                  <li v-for="row in previewFindings" :key="row.text" class="flex items-start gap-2.5 text-sm">
+                    <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full" :class="row.dot" aria-hidden="true" />
+                    <span class="text-content-muted">{{ row.text }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
 
     <!-- Features -->
     <section id="features" class="px-4 py-24 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-6xl">
         <div class="max-w-xl">
-          <p class="text-sm font-semibold text-brand">What you get</p>
-          <h2 class="mt-2 text-3xl font-semibold tracking-tight text-content sm:text-4xl">
+          <p class="font-mono text-xs uppercase tracking-wider text-brand">[ What you get ]</p>
+          <h2 class="mt-3 text-3xl font-semibold tracking-tight text-content sm:text-4xl">
             Four ways to see your resume the way a hiring pipeline does
           </h2>
         </div>
@@ -131,8 +159,8 @@
     <section id="how-it-works" class="border-y-2 border-content bg-surface-muted/60 px-4 py-24 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-5xl">
         <div class="max-w-xl">
-          <p class="text-sm font-semibold text-brand">Process</p>
-          <h2 class="mt-2 text-3xl font-semibold tracking-tight text-content sm:text-4xl">Three steps, a few minutes</h2>
+          <p class="font-mono text-xs uppercase tracking-wider text-brand">[ Process ]</p>
+          <h2 class="mt-3 text-3xl font-semibold tracking-tight text-content sm:text-4xl">Three steps, a few minutes</h2>
         </div>
 
         <ol class="mt-14 grid gap-10 sm:grid-cols-3">
@@ -151,8 +179,8 @@
     <section id="about" class="px-4 py-24 sm:px-6 lg:px-8">
       <div class="mx-auto grid max-w-5xl gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
         <div>
-          <p class="text-sm font-semibold text-brand">Why this exists</p>
-          <h2 class="mt-2 text-3xl font-semibold tracking-tight text-content">Why I built this</h2>
+          <p class="font-mono text-xs uppercase tracking-wider text-brand">[ Why this exists ]</p>
+          <h2 class="mt-3 text-3xl font-semibold tracking-tight text-content">Why I built this</h2>
         </div>
 
         <div class="space-y-4 text-content-muted">
@@ -187,7 +215,7 @@
     <!-- Tech stack -->
     <section class="px-4 pb-24 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-5xl text-center">
-        <p class="text-sm font-semibold text-brand">Built with</p>
+        <p class="font-mono text-xs uppercase tracking-wider text-brand">[ Built with ]</p>
         <div class="mt-5 flex flex-wrap justify-center gap-2.5">
           <span
             v-for="tech in techStack"
@@ -247,9 +275,9 @@ import ScoreGauge from '@/components/charts/ScoreGauge.vue'
 const auth = useAuthStore()
 
 const stats = [
-  { label: 'Analysis types', value: '4' },
-  { label: 'Avg. turnaround', value: '<1 min' },
-  { label: 'File formats', value: 'PDF/DOCX' },
+  { label: 'Types', value: '4' },
+  { label: 'Turnaround', value: '<1 min' },
+  { label: 'Formats', value: 'PDF/DOCX' },
 ]
 
 const previewFindings = [
