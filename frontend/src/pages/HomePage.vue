@@ -1,10 +1,10 @@
 <template>
   <div class="min-h-screen bg-canvas">
     <!-- Nav -->
-    <nav class="fixed top-0 z-50 w-full border-b border-border/70 bg-canvas/75 backdrop-blur-lg">
+    <nav class="fixed top-0 z-50 w-full border-b-2 border-content bg-canvas">
       <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div class="flex items-center gap-2.5">
-          <span class="grid h-8 w-8 place-items-center rounded-lg bg-gradient-brand text-on-brand shadow-glow">
+          <span class="grid h-8 w-8 place-items-center rounded-md border-2 border-content bg-brand text-on-brand">
             <svg class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
             </svg>
@@ -13,10 +13,10 @@
         </div>
 
         <div class="flex items-center gap-1 sm:gap-2">
-          <a href="#features" class="hidden rounded-lg px-3 py-2 text-sm font-medium text-content-muted transition hover:text-content sm:inline-block">
+          <a href="#features" class="hidden rounded-md px-3 py-2 text-sm font-medium text-content-muted transition hover:text-content sm:inline-block">
             Features
           </a>
-          <a href="#how-it-works" class="hidden rounded-lg px-3 py-2 text-sm font-medium text-content-muted transition hover:text-content sm:inline-block">
+          <a href="#how-it-works" class="hidden rounded-md px-3 py-2 text-sm font-medium text-content-muted transition hover:text-content sm:inline-block">
             How it works
           </a>
           <Button v-if="auth.user" tag="router-link" to="/dashboard" size="sm">Dashboard</Button>
@@ -27,23 +27,22 @@
 
     <!-- Hero -->
     <section class="relative overflow-hidden pt-36 pb-20 sm:pt-44 sm:pb-28">
-      <div class="aurora pointer-events-none absolute inset-0 opacity-70 dark:opacity-50" aria-hidden="true" />
-      <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-canvas" aria-hidden="true" />
-
       <div class="relative mx-auto grid max-w-6xl gap-16 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:px-8">
         <div class="motion-safe:animate-[rise_0.6s_ease-out_backwards]">
-          <div class="inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 px-3.5 py-1.5 text-xs font-medium text-content-muted shadow-card backdrop-blur">
-            <span class="h-1.5 w-1.5 rounded-full bg-spark" aria-hidden="true" />
+          <div class="inline-flex items-center gap-2 rounded-full border-2 border-content bg-surface px-3.5 py-1.5 text-xs font-medium text-content">
+            <span class="h-1.5 w-1.5 rounded-full bg-brand" aria-hidden="true" />
             Built for job seekers, not recruiters
           </div>
 
           <h1 class="mt-6 text-5xl font-semibold leading-[1.05] tracking-tight text-content sm:text-6xl lg:text-[4.25rem]">
             Beat the ATS.
             <br />
-            <span class="text-gradient-brand">Land the interview.</span>
+            <span class="underline decoration-brand decoration-[7px] underline-offset-[12px]">
+              Land the interview.
+            </span>
           </h1>
 
-          <p class="mt-6 max-w-xl text-lg leading-relaxed text-content-muted">
+          <p class="mt-8 max-w-xl text-lg leading-relaxed text-content-muted">
             Upload your resume and get a score, a prioritised fix list, and the exact
             keywords a hiring pipeline is scanning for — before you hit apply.
           </p>
@@ -62,7 +61,7 @@
             </Button>
           </div>
 
-          <dl class="mt-12 grid max-w-md grid-cols-3 gap-6 border-t border-border pt-6">
+          <dl class="mt-12 grid max-w-md grid-cols-3 gap-6 border-t-2 border-content pt-6">
             <div v-for="stat in stats" :key="stat.label">
               <dt class="text-xs text-content-subtle">{{ stat.label }}</dt>
               <dd class="mt-1 font-display text-xl font-semibold text-content">{{ stat.value }}</dd>
@@ -72,9 +71,7 @@
 
         <!-- Product preview: the real ScoreGauge and feedback UI, not a mockup -->
         <div class="motion-safe:animate-[rise_0.7s_ease-out_0.1s_backwards] lg:justify-self-end">
-          <div class="relative w-full max-w-sm rounded-2xl border border-border bg-surface/90 p-5 shadow-overlay backdrop-blur-sm sm:p-6">
-            <div class="absolute -inset-px -z-10 rounded-2xl bg-gradient-brand opacity-25 blur-xl" aria-hidden="true" />
-
+          <div class="w-full max-w-sm rounded-xl border-2 border-content bg-surface p-5 shadow-bold sm:p-6">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2 text-sm font-medium text-content">
                 <svg class="h-4 w-4 text-content-subtle" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -116,9 +113,9 @@
           <div
             v-for="feature in features"
             :key="feature.title"
-            class="group relative rounded-2xl border border-border bg-surface p-6 shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand-border hover:shadow-raised"
+            class="group rounded-xl border-2 border-content bg-surface p-6 transition duration-150 hover:-translate-y-0.5 hover:shadow-bold"
           >
-            <span class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-brand text-on-brand">
+            <span class="grid h-11 w-11 place-items-center rounded-lg border-2 border-content bg-brand text-on-brand">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" :d="feature.icon" />
               </svg>
@@ -131,7 +128,7 @@
     </section>
 
     <!-- How it works -->
-    <section id="how-it-works" class="border-y border-border bg-surface-muted/60 px-4 py-24 sm:px-6 lg:px-8">
+    <section id="how-it-works" class="border-y-2 border-content bg-surface-muted/60 px-4 py-24 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-5xl">
         <div class="max-w-xl">
           <p class="text-sm font-semibold text-brand">Process</p>
@@ -140,7 +137,7 @@
 
         <ol class="mt-14 grid gap-10 sm:grid-cols-3">
           <li v-for="(step, i) in steps" :key="step.title" class="relative">
-            <span class="font-display text-4xl font-semibold text-transparent [-webkit-text-stroke:1.5px_var(--border-strong)]">
+            <span class="font-display text-4xl font-semibold text-transparent [-webkit-text-stroke:1.5px_var(--content)]">
               {{ String(i + 1).padStart(2, '0') }}
             </span>
             <h3 class="mt-3 font-semibold text-content">{{ step.title }}</h3>
@@ -205,7 +202,7 @@
 
     <!-- CTA -->
     <section class="relative overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-4xl rounded-3xl bg-gradient-brand px-8 py-16 text-center shadow-glow sm:px-16">
+      <div class="mx-auto max-w-4xl rounded-2xl border-2 border-content bg-brand px-8 py-16 text-center shadow-bold sm:px-16">
         <h2 class="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
           Ready to see your resume through a screener's eyes?
         </h2>
@@ -214,7 +211,7 @@
         </p>
         <RouterLink
           :to="auth.user ? '/dashboard' : '/login'"
-          class="mt-8 inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-brand shadow-lg transition hover:bg-white/90"
+          class="mt-8 inline-flex items-center gap-2 rounded-md border-2 border-content bg-white px-6 py-3 text-sm font-semibold text-brand transition hover:bg-white/90"
         >
           Get started free
           <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -225,10 +222,10 @@
     </section>
 
     <!-- Footer -->
-    <footer class="border-t border-border px-4 py-8 sm:px-6 lg:px-8">
+    <footer class="border-t-2 border-content px-4 py-8 sm:px-6 lg:px-8">
       <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
         <div class="flex items-center gap-2">
-          <span class="grid h-6 w-6 place-items-center rounded-md bg-gradient-brand text-on-brand">
+          <span class="grid h-6 w-6 place-items-center rounded border-2 border-content bg-brand text-on-brand">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
             </svg>

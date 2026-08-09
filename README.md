@@ -1,9 +1,13 @@
 # ResumeAI
 
-An AI-powered resume analysis platform. Upload a resume, run an analysis, and
-get a score plus prioritised, specific feedback.
+A resume analysis tool. Upload a resume, run an analysis, and get a score
+plus specific, prioritised feedback — the same read an applicant tracking
+system would give it, before you actually apply.
 
-Laravel API, Vue 3 client, any OpenAI-compatible model provider.
+Laravel API, Vue 3 client, any OpenAI-compatible model provider behind it.
+
+Started as a project to learn how LLMs hold up in a real application: real
+auth, real billing, a real queue, not just a chat window.
 
 ---
 
@@ -16,9 +20,10 @@ Laravel API, Vue 3 client, any OpenAI-compatible model provider.
   - **Content review** — whether bullet points show impact
   - **Formatting check** — structure, spacing, headings, date consistency
   - **Job comparison** — match against a specific posting, with keyword gaps
-- Read a score, severity-ranked fixes, strengths, weaknesses and next steps
-- Export a PDF report (paid plans)
-- Track past analyses per resume
+- Read a score, severity-ranked fixes, strengths, weaknesses, and what to do
+  about it
+- Export a PDF report (Pro plan)
+- Come back and see every past analysis for a resume
 
 ---
 
@@ -26,9 +31,11 @@ Laravel API, Vue 3 client, any OpenAI-compatible model provider.
 
 - PHP 8.3+ and Composer
 - Node 20+
-- An OpenAI-compatible API key
+- An OpenAI-compatible API key (OpenAI itself, or any compatible provider —
+  OpenRouter, etc.)
 - Google OAuth credentials
-- Optionally Docker, and Stripe keys if you want paid plans
+- Docker, if you'd rather not install PHP/Postgres/Redis locally
+- Stripe keys, only if you want paid plans to actually work
 
 ---
 
@@ -66,8 +73,9 @@ php artisan serve
 
 ### Queue worker — required
 
-Text extraction and analysis run as queued jobs. **Nothing will finish without
-a worker running**: uploads stay on "Reading…" and analyses stay on "Queued".
+Text extraction and analysis run as queued jobs. **Nothing will finish
+without a worker running**: uploads stay on "Reading…" and analyses stay
+queued forever.
 
 ```bash
 cd backend
@@ -76,16 +84,16 @@ php artisan queue:work
 
 Leave it running in its own terminal alongside `php artisan serve`.
 
-> Do not set `QUEUE_CONNECTION=sync` to avoid this. That puts a model call of
-> up to two minutes inside the web request and exhausts the worker pool under
-> any real traffic.
+> Don't set `QUEUE_CONNECTION=sync` to skip this step. That runs the model
+> call — up to two minutes — inside the web request itself, and stalls every
+> other request on the same worker under any real traffic.
 
 ### Frontend
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env      # only if your API is not on localhost:8000
+cp .env.example .env      # only if your API isn't on localhost:8000
 npm run dev
 ```
 
@@ -98,14 +106,24 @@ npm run dev
 
 ## Docker
 
+The compose file runs the whole stack — Nginx, the Laravel app, a queue
+worker, the scheduler, PostgreSQL, Redis, and Mailpit for catching outgoing
+mail — so nothing needs to be started by hand.
+
 ```bash
 docker compose up -d
 docker compose exec app php artisan migrate
 docker compose logs -f
 ```
 
-The compose file provides PostgreSQL and Redis; point `DB_CONNECTION=pgsql`
-and the Redis variables at them, and run the queue worker service.
+| Service | URL |
+|---|---|
+| App (via Nginx) | http://localhost |
+| Frontend (direct) | http://localhost:5173 |
+| Mailpit | http://localhost:8025 |
+
+Point `.env` at `DB_CONNECTION=pgsql` and the Redis host/port for the
+containers before bringing the stack up — see `.env.example`.
 
 ---
 
@@ -125,7 +143,8 @@ cd backend
 php artisan ai:status
 ```
 
-Reports the endpoint, model, whether the key works, and remaining rate limit.
+Reports the endpoint, model, whether the key works, and remaining rate
+limit — without exposing any of that to end users.
 
 ---
 
@@ -133,12 +152,14 @@ Reports the endpoint, model, whether the key works, and remaining rate limit.
 
 Before going live:
 
-- `APP_DEBUG=false` — debug mode returns stack traces and config values to the client
-- `APP_ENV=production`, and a generated `APP_KEY`
+- `APP_DEBUG=false` — debug mode returns stack traces and config values to
+  the client
+- `APP_ENV=production`, with a freshly generated `APP_KEY`
 - `SESSION_SECURE_COOKIE=true` behind HTTPS
 - `SESSION_DRIVER` and `CACHE_STORE` on `database` or `redis`, never `file`,
   so sessions are shared across app servers
-- `SANCTUM_STATEFUL_DOMAINS` and `FRONTEND_URL` set to the real frontend origin
+- `SANCTUM_STATEFUL_DOMAINS` and `FRONTEND_URL` set to the real frontend
+  origin
 - A supervised queue worker (`php artisan queue:work --tries=3`)
 - A Stripe webhook pointed at `POST /api/billing/webhook`, with the signing
   secret in `STRIPE_WEBHOOK_SECRET`

@@ -17,7 +17,7 @@ import Spinner from '@/components/ui/Spinner.vue'
 
 const props = withDefaults(
   defineProps<{
-    /** 'primary' carries the brand gradient — spend it on one action per view. */
+    /** 'primary' carries the brand color — spend it on one action per view. */
     variant?: 'primary' | 'secondary' | 'ghost' | 'destructive'
     size?: 'sm' | 'md' | 'lg'
     tag?: 'button' | 'a' | 'router-link'
@@ -29,23 +29,29 @@ const props = withDefaults(
 )
 
 const sizes = {
-  sm: 'px-3 py-1.5 text-xs gap-1.5 rounded-lg',
-  md: 'px-4 py-2.5 text-sm gap-2 rounded-lg',
-  lg: 'px-6 py-3.5 text-base gap-2.5 rounded-xl',
+  sm: 'px-3 py-1.5 text-xs gap-1.5 rounded-md',
+  md: 'px-4 py-2.5 text-sm gap-2 rounded-md',
+  lg: 'px-6 py-3.5 text-base gap-2.5 rounded-lg',
 }
 
+// Flat fills, no blur, no blend. The tactile press — shadow at rest,
+// button moves onto it on press — is the one bit of flourish, and it costs
+// nothing (transform + a shadow swap, no animation loop).
+const PRESS =
+  'shadow-bold transition-[transform,box-shadow] duration-100 ' +
+  'hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_0_var(--content)] ' +
+  'active:translate-x-1 active:translate-y-1 active:shadow-none'
+
 const variants = {
-  primary:
-    'bg-gradient-brand text-on-brand shadow-[0_1px_0_0_rgb(255_255_255_/_0.15)_inset] hover:brightness-110 hover:shadow-glow',
-  secondary:
-    'border border-border bg-surface text-content hover:bg-surface-muted hover:border-border-strong',
-  ghost: 'text-content-muted hover:bg-surface-muted hover:text-content',
-  destructive: 'border border-critical-border bg-critical-soft text-critical hover:opacity-90',
+  primary: `border-2 border-content bg-brand text-on-brand ${PRESS}`,
+  secondary: `border-2 border-content bg-surface text-content ${PRESS}`,
+  ghost: 'text-content-muted transition duration-150 hover:bg-surface-muted hover:text-content',
+  destructive: `border-2 border-content bg-critical text-white ${PRESS}`,
 }
 
 const classes = computed(() => [
-  'inline-flex shrink-0 items-center justify-center font-semibold transition duration-150',
-  'disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex shrink-0 items-center justify-center font-semibold',
+  'disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none',
   sizes[props.size],
   variants[props.variant],
 ])
