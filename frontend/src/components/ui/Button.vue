@@ -34,19 +34,15 @@ const sizes = {
   lg: 'px-6 py-3.5 text-base gap-2.5 rounded-lg',
 }
 
-// Flat fills, no blur, no blend. The tactile press — shadow at rest,
-// button moves onto it on press — is the one bit of flourish, and it costs
-// nothing (transform + a shadow swap, no animation loop).
-const PRESS =
-  'shadow-bold transition-[transform,box-shadow] duration-100 ' +
-  'hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_0_var(--content)] ' +
-  'active:translate-x-1 active:translate-y-1 active:shadow-none'
+// Floating glass rather than a boxed, hard-bordered fill: translucent,
+// blurred, thin border, with a gentle lift on hover instead of a press.
+const LIFT = 'transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-overlay active:translate-y-0'
 
 const variants = {
-  primary: `border-2 border-content bg-brand text-on-brand ${PRESS}`,
-  secondary: `border-2 border-content bg-surface text-content ${PRESS}`,
+  primary: `glass-brand text-on-brand ${LIFT}`,
+  secondary: `glass text-content ${LIFT}`,
   ghost: 'text-content-muted transition duration-150 hover:bg-surface-muted hover:text-content',
-  destructive: `border-2 border-content bg-critical text-white ${PRESS}`,
+  destructive: `glass-critical text-white ${LIFT}`,
 }
 
 const classes = computed(() => [

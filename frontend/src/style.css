@@ -60,10 +60,14 @@
   --shadow-raised: 0 4px 12px rgb(16 19 27 / 0.08), 0 2px 4px rgb(16 19 27 / 0.04);
   --shadow-overlay: 0 16px 48px rgb(16 19 27 / 0.18);
 
-  /* Hard, un-blurred offset shadow — the one deliberately graphic device in
-     the system. Reuses --content so it inverts correctly in dark mode with
-     no separate override. */
-  --shadow-bold: 4px 4px 0 0 var(--content);
+  /* Glass: translucent surfaces with a blur, for chrome that should feel
+     like it's floating over the page rather than boxed onto it. */
+  --glass-bg: color-mix(in oklab, var(--surface) 68%, transparent);
+  --glass-border: color-mix(in oklab, var(--content) 10%, transparent);
+  --glass-brand-bg: color-mix(in oklab, var(--brand) 80%, transparent);
+  --glass-brand-border: color-mix(in oklab, white 30%, transparent);
+  --glass-critical-bg: color-mix(in oklab, var(--critical) 85%, transparent);
+  --glass-critical-border: color-mix(in oklab, white 25%, transparent);
 }
 
 [data-theme="dark"] {
@@ -106,7 +110,13 @@
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow-raised: 0 4px 14px rgb(0 0 0 / 0.5);
   --shadow-overlay: 0 16px 48px rgb(0 0 0 / 0.65);
-  --shadow-bold: 4px 4px 0 0 var(--content);
+
+  --glass-bg: color-mix(in oklab, var(--surface) 55%, transparent);
+  --glass-border: color-mix(in oklab, white 12%, transparent);
+  --glass-brand-bg: color-mix(in oklab, var(--brand) 78%, transparent);
+  --glass-brand-border: color-mix(in oklab, white 22%, transparent);
+  --glass-critical-bg: color-mix(in oklab, var(--critical) 80%, transparent);
+  --glass-critical-border: color-mix(in oklab, white 18%, transparent);
 }
 
 /* Expose the tokens as utilities: bg-surface, text-content-muted, border-border… */
@@ -154,7 +164,6 @@
   --shadow-card: var(--shadow-card);
   --shadow-raised: var(--shadow-raised);
   --shadow-overlay: var(--shadow-overlay);
-  --shadow-bold: var(--shadow-bold);
 }
 
 @layer base {
@@ -198,6 +207,34 @@
   ::selection {
     background-color: var(--brand-soft);
     color: var(--content);
+  }
+}
+
+@layer components {
+  /* Floating chrome: translucent, blurred, thin border — instead of a
+     solid box with a hard outline. */
+  .glass {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-raised);
+  }
+
+  .glass-brand {
+    background: var(--glass-brand-bg);
+    border: 1px solid var(--glass-brand-border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-raised);
+  }
+
+  .glass-critical {
+    background: var(--glass-critical-bg);
+    border: 1px solid var(--glass-critical-border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-raised);
   }
 }
 

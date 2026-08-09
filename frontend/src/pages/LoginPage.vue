@@ -2,7 +2,7 @@
   <div class="flex min-h-screen flex-col bg-canvas">
     <header class="p-6">
       <RouterLink to="/" class="inline-flex items-center gap-2 font-display font-semibold tracking-tight text-content">
-        <span class="grid h-8 w-8 place-items-center rounded-md border-2 border-content bg-brand text-on-brand">
+        <span class="glass-brand grid h-8 w-8 place-items-center rounded-md text-on-brand">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
           </svg>
@@ -12,12 +12,12 @@
     </header>
 
     <main class="flex flex-1 items-center justify-center px-4 pb-24">
-      <div class="w-full max-w-sm rounded-xl border-2 border-content bg-surface p-8 shadow-bold">
+      <div class="glass w-full max-w-sm rounded-xl p-8">
         <h1 class="text-2xl font-semibold tracking-tight text-content">Sign in</h1>
         <p class="mt-2 text-content-muted">Continue with Google to analyse your resume.</p>
 
         <button
-          class="mt-8 flex w-full items-center justify-center gap-3 rounded-md border-2 border-content bg-surface px-6 py-3 font-medium text-content transition hover:bg-surface-muted"
+          class="glass mt-8 flex w-full items-center justify-center gap-3 rounded-md px-6 py-3 font-medium text-content transition hover:shadow-overlay"
           @click="auth.loginWithGoogle"
         >
           <svg class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">

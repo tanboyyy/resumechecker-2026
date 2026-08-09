@@ -7,13 +7,13 @@
       Skip to content
     </a>
 
-    <header class="sticky top-0 z-30 border-b-2 border-content bg-surface">
+    <header class="glass sticky top-0 z-30 border-x-0 border-t-0">
       <div class="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6 lg:px-8">
         <RouterLink
           to="/dashboard"
           class="flex shrink-0 items-center gap-2 rounded-lg font-display font-semibold tracking-tight text-content"
         >
-          <span class="grid h-8 w-8 place-items-center rounded-md border-2 border-content bg-brand text-on-brand">
+          <span class="glass-brand grid h-8 w-8 place-items-center rounded-md text-on-brand">
             <svg class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
             </svg>

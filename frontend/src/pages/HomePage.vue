@@ -4,10 +4,10 @@
          a deliberate brand moment, not a light/dark toggle state. Everything
          inside reads its color from the cascaded dark tokens automatically. -->
     <div data-theme="dark">
-      <nav class="fixed top-0 z-50 w-full border-b border-border bg-canvas">
+      <nav class="glass fixed top-0 z-50 w-full border-x-0 border-t-0">
         <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div class="flex items-center gap-2.5">
-            <span class="grid h-8 w-8 place-items-center rounded-md border-2 border-content bg-brand text-on-brand">
+            <span class="glass-brand grid h-8 w-8 place-items-center rounded-md text-on-brand">
               <svg class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
               </svg>
@@ -70,7 +70,7 @@
 
             <!-- The real product preview, not a mockup. -->
             <div class="motion-safe:animate-[rise_0.7s_ease-out_0.1s_backwards] lg:justify-self-end">
-              <div class="w-full max-w-sm rounded-xl border-2 border-content bg-surface p-5 shadow-bold sm:p-6">
+              <div class="glass w-full max-w-sm rounded-xl p-5 sm:p-6">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2 text-sm font-medium text-content">
                     <svg class="h-4 w-4 text-content-subtle" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -114,9 +114,9 @@
           <div
             v-for="feature in features"
             :key="feature.title"
-            class="group rounded-xl border-2 border-content bg-surface p-6 transition duration-150 hover:-translate-y-0.5 hover:shadow-bold"
+            class="glass group rounded-xl p-6 transition duration-150 hover:-translate-y-0.5 hover:shadow-overlay"
           >
-            <span class="grid h-11 w-11 place-items-center rounded-lg border-2 border-content bg-brand text-on-brand">
+            <span class="glass-brand grid h-11 w-11 place-items-center rounded-lg text-on-brand">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" :d="feature.icon" />
               </svg>
@@ -129,7 +129,7 @@
     </section>
 
     <!-- How it works -->
-    <section id="how-it-works" class="border-y-2 border-content bg-surface-muted/60 px-4 py-24 sm:px-6 lg:px-8">
+    <section id="how-it-works" class="border-y border-border bg-surface-muted/60 px-4 py-24 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-5xl">
         <div class="max-w-xl">
           <p class="font-mono text-xs uppercase tracking-wider text-brand">[ Process ]</p>
@@ -203,16 +203,20 @@
 
     <!-- CTA -->
     <section class="relative overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-4xl rounded-2xl border-2 border-content bg-brand px-8 py-16 text-center shadow-bold sm:px-16">
+      <div class="glass-brand mx-auto max-w-4xl rounded-2xl px-8 py-16 text-center">
         <h2 class="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
           Ready to see your resume through a screener's eyes?
         </h2>
         <p class="mx-auto mt-3 max-w-md text-white/85">
           Free to start. No credit card required.
         </p>
+        <!-- Deliberately not theme-reactive: this chip always sits on the
+             brand-blue panel above, so it stays a light glass chip with the
+             light-mode brand blue regardless of site theme — the dark-mode
+             brand blue is too pale against both a dark chip and this backdrop. -->
         <RouterLink
           :to="auth.user ? '/dashboard' : '/login'"
-          class="mt-8 inline-flex items-center gap-2 rounded-md border-2 border-content bg-white px-6 py-3 text-sm font-semibold text-brand transition hover:bg-white/90"
+          class="mt-8 inline-flex items-center gap-2 rounded-md border border-white/50 bg-white/90 px-6 py-3 text-sm font-semibold text-[#1447e6] shadow-raised backdrop-blur-md transition hover:bg-white hover:shadow-overlay"
         >
           Get started free
           <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -223,10 +227,10 @@
     </section>
 
     <!-- Footer -->
-    <footer class="border-t-2 border-content px-4 py-8 sm:px-6 lg:px-8">
+    <footer class="border-t border-border px-4 py-8 sm:px-6 lg:px-8">
       <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
         <div class="flex items-center gap-2">
-          <span class="grid h-6 w-6 place-items-center rounded border-2 border-content bg-brand text-on-brand">
+          <span class="glass-brand grid h-6 w-6 place-items-center rounded text-on-brand">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
             </svg>
