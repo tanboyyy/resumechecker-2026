@@ -28,76 +28,49 @@
         </div>
       </nav>
 
-      <section class="bg-canvas pt-32 pb-20 sm:pt-40">
+      <section class="bg-canvas pt-32 pb-24 sm:pt-40 sm:pb-28">
         <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div class="grid gap-10 lg:grid-cols-[1.3fr_0.7fr] lg:items-start">
+          <div class="grid gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
             <div class="motion-safe:animate-[rise_0.6s_ease-out_backwards]">
               <p class="font-mono text-xs uppercase tracking-wider text-content-muted">
                 [ For job seekers, not recruiters ]
               </p>
-              <h1 class="mt-5 text-5xl font-semibold leading-[1.05] tracking-tight text-content sm:text-6xl lg:text-[4.5rem]">
+              <h1 class="mt-5 text-5xl font-semibold leading-[1.05] tracking-tight text-content sm:text-6xl lg:text-[4.25rem]">
                 Beat the ATS.
                 <br />
                 Land the interview.
               </h1>
-            </div>
 
-            <div class="motion-safe:animate-[rise_0.6s_ease-out_0.1s_backwards] lg:pt-3">
-              <p class="max-w-xs font-mono text-xs uppercase leading-relaxed tracking-wide text-content-muted">
+              <p class="mt-6 max-w-md font-mono text-xs uppercase leading-relaxed tracking-wide text-content-muted">
                 ResumeAI reads your resume the way an applicant tracking system
                 does, and tells you what to fix before you hit apply.
               </p>
-              <dl class="mt-6 flex gap-6 font-mono text-xs uppercase tracking-wide text-content-subtle">
+
+              <div class="mt-9 flex flex-col gap-3 sm:flex-row">
+                <Button tag="router-link" :to="auth.user ? '/dashboard' : '/login'" size="lg">
+                  Analyse my resume
+                  <template #icon>
+                    <svg class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0-5 5m5-5H6" />
+                    </svg>
+                  </template>
+                </Button>
+                <Button tag="a" href="#how-it-works" variant="secondary" size="lg">
+                  See how it works
+                </Button>
+              </div>
+
+              <dl class="mt-12 flex gap-8 border-t border-border pt-6 font-mono text-xs uppercase tracking-wide text-content-subtle">
                 <div v-for="stat in stats" :key="stat.label">
                   <dt>{{ stat.label }}</dt>
                   <dd class="mt-1 text-content">{{ stat.value }}</dd>
                 </div>
               </dl>
             </div>
-          </div>
 
-          <div class="mt-10 flex flex-col gap-3 motion-safe:animate-[rise_0.6s_ease-out_0.15s_backwards] sm:flex-row">
-            <Button tag="router-link" :to="auth.user ? '/dashboard' : '/login'" size="lg">
-              Analyse my resume
-              <template #icon>
-                <svg class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0-5 5m5-5H6" />
-                </svg>
-              </template>
-            </Button>
-            <Button tag="a" href="#how-it-works" variant="secondary" size="lg">
-              See how it works
-            </Button>
-          </div>
-        </div>
-
-        <!-- The visual moment: a giant ghost wordmark for texture, the real
-             product preview over it, and the four analysis types as a
-             corner tag list. No stock photography — the product itself is
-             the image. -->
-        <div class="relative mt-16 overflow-hidden border-y border-border bg-surface-muted/40">
-          <p
-            aria-hidden="true"
-            class="pointer-events-none select-none whitespace-nowrap py-6 text-center font-display text-[5.5rem] font-bold leading-none tracking-tight text-transparent sm:text-[9rem] lg:text-[11rem]"
-            style="-webkit-text-stroke: 1px var(--border-strong)"
-          >
-            RESUMEAI
-          </p>
-
-          <div class="relative mx-auto grid max-w-6xl gap-8 px-4 pb-12 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-end lg:px-8">
-            <dl class="grid grid-cols-2 gap-x-8 gap-y-4 font-mono text-xs uppercase tracking-wide text-content-subtle sm:max-w-sm">
-              <div>
-                <dt class="text-content-muted">Analyse</dt>
-                <dd class="mt-1 text-content">ATS Check<br />Content Review</dd>
-              </div>
-              <div>
-                <dt class="text-content-muted">Compare</dt>
-                <dd class="mt-1 text-content">Formatting<br />Job Comparison</dd>
-              </div>
-            </dl>
-
-            <div class="w-full max-w-sm justify-self-end">
-              <div class="rounded-xl border-2 border-content bg-surface p-5 shadow-bold sm:p-6">
+            <!-- The real product preview, not a mockup. -->
+            <div class="motion-safe:animate-[rise_0.7s_ease-out_0.1s_backwards] lg:justify-self-end">
+              <div class="w-full max-w-sm rounded-xl border-2 border-content bg-surface p-5 shadow-bold sm:p-6">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2 text-sm font-medium text-content">
                     <svg class="h-4 w-4 text-content-subtle" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -165,7 +138,7 @@
 
         <ol class="mt-14 grid gap-10 sm:grid-cols-3">
           <li v-for="(step, i) in steps" :key="step.title" class="relative">
-            <span class="font-display text-4xl font-semibold text-transparent [-webkit-text-stroke:1.5px_var(--content)]">
+            <span class="font-mono text-sm text-content-subtle">
               {{ String(i + 1).padStart(2, '0') }}
             </span>
             <h3 class="mt-3 font-semibold text-content">{{ step.title }}</h3>
