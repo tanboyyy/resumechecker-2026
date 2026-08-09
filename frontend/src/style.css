@@ -66,6 +66,10 @@
   --glass-border: color-mix(in oklab, var(--content) 10%, transparent);
   --glass-brand-bg: color-mix(in oklab, var(--brand) 80%, transparent);
   --glass-brand-border: color-mix(in oklab, white 30%, transparent);
+  /* Same hue as glass-brand, at chip strength — the "outline" half of the
+     primary/secondary pair, so they read as one family. */
+  --glass-brand-soft-bg: color-mix(in oklab, var(--brand-soft) 70%, transparent);
+  --glass-brand-soft-border: color-mix(in oklab, var(--brand) 35%, transparent);
   --glass-critical-bg: color-mix(in oklab, var(--critical) 85%, transparent);
   --glass-critical-border: color-mix(in oklab, white 25%, transparent);
 }
@@ -113,6 +117,8 @@
 
   --glass-bg: color-mix(in oklab, var(--surface) 55%, transparent);
   --glass-border: color-mix(in oklab, white 12%, transparent);
+  --glass-brand-soft-bg: color-mix(in oklab, var(--brand-soft) 65%, transparent);
+  --glass-brand-soft-border: color-mix(in oklab, var(--brand) 40%, transparent);
   --glass-brand-bg: color-mix(in oklab, var(--brand) 78%, transparent);
   --glass-brand-border: color-mix(in oklab, white 22%, transparent);
   --glass-critical-bg: color-mix(in oklab, var(--critical) 80%, transparent);
@@ -224,6 +230,14 @@
   .glass-brand {
     background: var(--glass-brand-bg);
     border: 1px solid var(--glass-brand-border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-raised);
+  }
+
+  .glass-brand-soft {
+    background: var(--glass-brand-soft-bg);
+    border: 1px solid var(--glass-brand-soft-border);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     box-shadow: var(--shadow-raised);
